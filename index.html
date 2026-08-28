@@ -1,0 +1,4049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portfolio — Nicholas Taylor</title>
+  <style>
+/* ============================================================
+   GENERAL PAGE STYLE
+   Main colors, width, and default text live here.
+   ============================================================ */
+:root {
+  --compact-nav-height: 4rem;
+
+  --paper: #fffef9;
+  --ink: #1a1a1a;
+  --muted: #6a6a66;
+  --line: rgba(26, 26, 26, .16);
+  --soft-line: rgba(26, 26, 26, .08);
+  --dark: #0b0b0b;
+  --identity-surface: #e9e8e3; /* EDIT THIS to change the large header background color */
+
+  /* NATURE / GROWTH ACCENTS
+     Kept intentionally muted so the portfolio still feels black/off-white first. */
+  --moss: #71806a;
+  --moss-dark: #4f5e49;
+  --moss-soft: #eef1e9;
+  --earth: #8b806b;
+  --earth-soft: rgba(139,128,107,.20);
+}
+
+* { box-sizing: border-box; }
+
+/*
+   KEEP THE WEBSITE INSIDE THE BROWSER WIDTH
+   -----------------------------------------
+   Some full-width visual elements use viewport sizing. On browsers that
+   reserve space for a vertical scrollbar, that can otherwise create a tiny
+   amount of sideways overflow. These rules intentionally disable horizontal
+   page scrolling while leaving normal vertical scrolling untouched.
+*/
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+body {
+  margin: 0 auto;
+  padding: 1.5rem;
+  max-width: 68rem;
+  overflow-x: visible;
+  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+a { color: inherit; }
+button, summary, a { -webkit-tap-highlight-color: transparent; }
+
+/* ============================================================
+   IDENTITY HEADER + WAVEFORM BACKGROUND
+
+   The separate black waveform strip has been removed. The SAME animated
+   waveform now lives behind the artist name inside the large gray header.
+   It is drawn in black so it matches the site's graph / type system.
+
+   The waveform fades away with the large header during the scroll morph.
+   ============================================================ */
+.identity-wave {
+  position: absolute !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1 !important;
+  opacity: var(--identity-wave-opacity, .72);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* ============================================================
+   NAME / TITLE AREA
+
+   This is where you can later replace ARTIST NAME and the subtitle.
+   ============================================================ */
+.identity-intro {
+  padding: clamp(2rem, 5vw, 4rem) 0 clamp(1.8rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.identity-eyebrow {
+  margin: 0 0 .65rem;
+  color: var(--muted);
+  font-size: .7rem;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+
+/* ARTIST NAME FONT: edit font-family / weight / style here. */
+.identity-intro h1 {
+  margin: 0;
+  max-width: 13ch;
+  font-family: "Segoe UI", "Aptos", "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(3.1rem, 8vw, 6.8rem);
+  font-weight: 300;
+  font-style: italic;
+  line-height: .88;
+  letter-spacing: -.045em;
+  text-transform: none;
+}
+
+.identity-subtitle {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: clamp(.82rem, 1.4vw, 1rem);
+  letter-spacing: .08em;
+}
+
+/* ============================================================
+   SCROLL-MORPHING IDENTITY HEADER
+
+   IMPORTANT: there is NO compact menu visible at the top of the site.
+
+   The large white identity header (with the black waveform behind the name) is the only header you see at first.
+   Once it reaches the top of the browser, it briefly sticks there and
+   compresses into the black navigation bar. Only near the END of that
+   morph do the Home / All Projects / About controls appear.
+
+   Scrolling back upward reverses the effect and completely hides the
+   compact menu again.
+   ============================================================ */
+.identity-intro {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  isolation: isolate;
+  overflow: hidden;
+
+  /*
+     FULL-BLEED MORPH HEADER
+     -----------------------
+     The identity header itself now spans the entire browser width. This means
+     the white header can become ONE continuous black navigation strip instead
+     of looking like a centered black piece sitting inside a wider page.
+
+     The padding calculations keep the words aligned with the normal 68rem
+     site content even though the background stretches edge-to-edge.
+  */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: -1.5rem;
+  padding-left: max(1.5rem, calc((100vw - 68rem) / 2 + 1.5rem));
+  padding-right: max(1.5rem, calc((100vw - 68rem) / 2 + 1.5rem));
+
+  background: var(--identity-surface);
+  --identity-dark-opacity: 0;
+  --identity-wave-opacity: .72;
+  --identity-name-scale: 1;
+  --identity-name-y: 0px;
+  --identity-name-opacity: 1;
+  --identity-copy-opacity: 1;
+  --identity-copy-y: 0px;
+  /*
+     IMPORTANT FOR SMOOTH SCROLLING:
+     The header's REAL height never changes during the morph. Only its
+     visible clipping boundary changes. This prevents scroll/layout jitter.
+  */
+  will-change: clip-path;
+  overflow-anchor: none;
+}
+
+/* The dark state fades in while the visible header boundary collapses. */
+.identity-intro::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: var(--dark);
+  opacity: var(--identity-dark-opacity);
+  will-change: opacity;
+  pointer-events: none;
+}
+
+.identity-intro > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Keep the waveform behind the words, but above the white/black background. */
+.identity-intro > .identity-wave {
+  position: absolute;
+  z-index: 1;
+}
+
+.identity-intro h1 {
+  transform-origin: left center;
+  transform: translateY(var(--identity-name-y)) scale(var(--identity-name-scale));
+  opacity: var(--identity-name-opacity);
+  will-change: transform, opacity;
+}
+
+.identity-eyebrow,
+.identity-subtitle {
+  transform: translateY(var(--identity-copy-y));
+  opacity: var(--identity-copy-opacity);
+  will-change: transform, opacity;
+}
+
+/* ============================================================
+   MAIN NAVIGATION / MENUS
+
+   This bar is FIXED to the top of the browser, but starts completely
+   invisible and non-interactive. The morph JavaScript reveals it only
+   after the large identity header has mostly compressed into black.
+
+   EDIT THE WORDS in the HTML navigation section below if you want
+   to rename Home / Projects / About or a project title.
+   ============================================================ */
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+
+  /* The compact state is always one continuous edge-to-edge black bar. */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-bottom: 1px solid rgba(255,255,255,.13);
+  background: rgba(11,11,11,.94);
+  color: #f7f6f1;
+  backdrop-filter: blur(12px);
+  --nav-height: var(--compact-nav-height);
+  --nav-brand-opacity: 1;
+  --nav-brand-y: 0px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition: opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
+}
+
+.site-nav.is-visible {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.nav-inner {
+  width: min(calc(100% - 3rem), 68rem);
+  min-height: var(--nav-height);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 2rem;
+  transition: min-height .12s linear;
+}
+
+.nav-brand {
+  position: absolute;
+  left: 0;
+  text-decoration: none;
+  font-size: .72rem;
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: .045em;
+  text-transform: none;
+  white-space: nowrap;
+  opacity: .62;
+  transform: translateY(var(--nav-brand-y));
+  transition: opacity .08s linear, transform .08s linear;
+  will-change: opacity, transform;
+}
+
+.nav-links {
+  width: min(68%, 38rem);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 0;
+  font-size: .96rem;
+  font-weight: 650;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.nav-links > a,
+.projects-nav-link {
+  color: rgba(247,246,241,.88);
+  text-decoration: none;
+  text-align: center;
+  padding: .72rem .4rem;
+  cursor: pointer;
+  transition: color .18s ease, opacity .18s ease, transform .18s ease;
+}
+
+.nav-links > a:hover,
+.nav-links > a.active,
+.projects-nav-link:hover,
+.projects-nav-link.active {
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* ALL PROJECTS is both a direct page link and a project dropdown.
+   Click the words to open #projects. Hover/focus the item—or use
+   the small chevron button—to reveal the individual project routes. */
+.projects-nav-item {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.projects-nav-link {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.projects-nav-toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(247,246,241,.72);
+  margin: 0 0 0 -.18rem;
+  padding: .62rem .28rem .62rem .05rem;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-1px);
+  transition: color .18s ease, transform .18s ease;
+}
+
+.projects-nav-toggle::before {
+  content: "⌄";
+  display: block;
+  font-size: .82em;
+  transform-origin: center;
+  transition: transform .16s ease;
+}
+
+.projects-nav-item:hover:not(.suppress-hover) .projects-nav-toggle,
+.projects-nav-item.is-open .projects-nav-toggle {
+  color: #fff;
+}
+
+.projects-nav-item.is-open .projects-nav-toggle::before {
+  transform: rotate(180deg);
+}
+
+.projects-nav-dropdown {
+  position: absolute;
+  top: calc(100% - .08rem);
+  left: 50%;
+  z-index: 70;
+  width: min(22rem, calc(100vw - 2rem));
+  transform: translate(-50%, -.35rem);
+  padding: .45rem;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(11,11,11,.985);
+  box-shadow: 0 .65rem 1.6rem rgba(0,0,0,.18);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity .14s ease,
+    transform .14s ease,
+    visibility 0s linear .14s;
+}
+
+.projects-nav-item:hover:not(.suppress-hover) .projects-nav-dropdown,
+.projects-nav-item.is-open .projects-nav-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+
+.projects-nav-dropdown a {
+  display: block;
+  color: rgba(247,246,241,.82);
+  text-decoration: none;
+  text-align: left;
+  padding: .72rem .8rem;
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .075em;
+  text-transform: none;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  transition: color .16s ease, background .16s ease, padding-left .16s ease;
+}
+
+.projects-nav-dropdown a:last-child {
+  border-bottom: 0;
+}
+
+.projects-nav-dropdown a:hover,
+.projects-nav-dropdown a:focus-visible {
+  color: #fff;
+  background: rgba(255,255,255,.06);
+  padding-left: 1rem;
+}
+
+
+/* ============================================================
+   PAGE SYSTEM
+   These .site-page sections are the "different pages" of the site.
+   JavaScript shows one at a time based on the #address at the end
+   of the browser URL. Example: #project-coward
+   ============================================================ */
+.site-page { padding: clamp(3.5rem, 7vw, 6rem) 0 2rem; }
+.site-page[hidden] { display: none !important; }
+
+/* ============================================================
+   ROUTE-SPECIFIC HEADER BEHAVIOR
+
+   Individual project routes, the About route, AND All Projects intentionally do NOT
+   contain the large identity header. They begin with the compact black
+   bar and cannot scroll upward into the Home-page header.
+   ============================================================ */
+body.route-project .identity-intro,
+body.route-about .identity-intro,
+body.route-projects .identity-intro {
+  display: none !important;
+}
+
+body.route-project .site-nav,
+body.route-about .site-nav,
+body.route-projects .site-nav {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+body.route-project .site-page,
+body.route-about .site-page,
+body.route-projects .site-page {
+  padding-top: calc(var(--compact-nav-height) + clamp(2.2rem, 4vw, 3.4rem));
+}
+
+/* ============================================================
+   HOME VIEWPORT + CONTACT FOOTER
+
+   Home reserves a small footer strip at the bottom of the viewport.
+   That means, once you have scrolled past the large identity header,
+   the ENTIRE tree plus the Nicholas/email footer can fit in one frame.
+   ============================================================ */
+body.route-home {
+  --home-footer-height: 3.45rem;
+  /* Remove the global body's bottom padding on Home so the footer can sit
+     on the actual bottom edge and the tree is not pushed under the fixed nav. */
+  padding-bottom: 0;
+}
+
+body.route-home footer {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--home-footer-height);
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+body.route-home footer p { margin: 0; }
+
+/* ============================================================
+   HOME PAGE = TREE-FIRST STAGE
+
+   The tree remains the focal point, but its stage now reserves space
+   for both the compact nav above and the contact footer below.
+   ============================================================ */
+#page-home {
+  padding: 0;
+  height: auto;
+  min-height: calc(100vh - var(--compact-nav-height));
+  min-height: calc(100svh - var(--compact-nav-height));
+}
+
+.home-tree-stage {
+  box-sizing: border-box;
+  height: auto;
+  min-height: calc(100vh - var(--compact-nav-height));
+  min-height: calc(100svh - var(--compact-nav-height));
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 2vh, 1.4rem) clamp(.75rem, 2vw, 1.5rem) clamp(2.2rem, 5vh, 3.2rem);
+}
+
+
+.page-kicker {
+  margin: 0 0 .7rem;
+  color: var(--muted);
+  font-size: .72rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.page-title {
+  margin: 0;
+  max-width: 13ch;
+  font-size: clamp(2.7rem, 7vw, 5.8rem);
+  font-weight: 300;
+  line-height: .95;
+  letter-spacing: -.045em;
+}
+
+.page-intro {
+  max-width: 42rem;
+  margin: 1.3rem 0 3.5rem;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+}
+
+/* ============================================================
+   HOME PAGE: ROOTED TREE PROJECT GRAPH
+
+   This is a rooted TREE used as the visual index for recent work.
+   - The bottom node is the root / starting point.
+   - The first real branching layer is organized by PROJECT MEDIUM.
+   - Category vertices (AUDIO, VIDEO, etc.) are structural labels,
+     not project links.
+   - Projects live ONLY on terminal leaves (degree = 1 vertices,
+     not counting the root at the bottom).
+   - A project leaf should neighbor the category vertex matching
+     that project's main medium.
+   - Empty leaves / categories are reserved for future work.
+
+   To change which project a leaf opens, edit the href="#project-..."
+   in the HOME PAGE HTML farther down in this file.
+   ============================================================ */
+
+/* ============================================================
+   TREE CATEGORY COLORS — EASY TO CHANGE
+
+   These three variables control the entire color family for each
+   branch: its edge, category node, project leaves, labels, and
+   empty future-project slots. Change ONLY these hex values later
+   if you want a different palette.
+   ============================================================ */
+:root {
+  --tree-audio: #3267d6;   /* AUDIO = blue */
+  --tree-video: #d95f4b;   /* VIDEO = warm coral/red */
+  --tree-future: #71806a;  /* FUTURE MEDIUM = moss / growth */
+}
+
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  padding-bottom: .7rem;
+  border-bottom: 1px solid var(--line);
+}
+.section-heading h2 { margin: 0; font-size: .78rem; letter-spacing: .15em; text-transform: uppercase; }
+.section-heading a { color: var(--muted); font-size: .8rem; }
+
+.project-graph-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  background:
+    radial-gradient(circle at 50% 82%, rgba(113,128,106,.085), transparent 31%),
+    transparent;
+  overflow: visible;
+  display: grid;
+  place-items: center;
+}
+
+.project-graph {
+  display: block;
+  width: 96%;
+  height: 88%;
+  max-width: none;
+  max-height: 100%;
+  overflow: visible;
+  transition: filter .35s ease;
+}
+
+/* When a category camera is active, the Home tree becomes a fixed viewing
+   experience rather than a scrollable page. JavaScript toggles this class. */
+html.tree-focus-lock,
+html.tree-focus-lock body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+/* CATEGORY CAMERA / ZOOM CONTROL */
+.tree-reset {
+  position: absolute;
+  z-index: 6;
+  top: clamp(.5rem, 1.4vh, 1rem);
+  left: clamp(.75rem, 2vw, 1.4rem);
+  appearance: none;
+  border: 1px solid rgba(79,94,73,.28);
+  background: rgba(255,254,249,.92);
+  color: var(--moss-dark);
+  padding: .62rem .84rem;
+  font: inherit;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-7px) scale(.97);
+  transition: opacity .22s ease, transform .22s ease, visibility 0s linear .22s;
+  backdrop-filter: blur(10px);
+}
+.tree-reset.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition-delay: 0s;
+}
+.tree-reset:hover,
+.tree-reset:focus-visible {
+  border-color: rgba(79,94,73,.58);
+  background: var(--moss-soft);
+}
+
+/* Edges share a muted organic base; media branches retain their own colors. */
+.graph-edge {
+  stroke: rgba(79,94,73,.30);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+  fill: none;
+  opacity: 1;
+  transition: opacity .34s ease, stroke-width .34s ease, filter .34s ease;
+}
+.graph-edge.audio-edge { stroke: var(--tree-audio); stroke-opacity: .72; }
+.graph-edge.video-edge { stroke: var(--tree-video); stroke-opacity: .72; }
+.graph-edge.future-edge { stroke: var(--tree-future); stroke-opacity: .62; }
+.graph-edge.is-focus-edge {
+  stroke-width: 2.05;
+  filter: drop-shadow(0 0 3px rgba(79,94,73,.12));
+}
+
+.graph-intermediate-node circle {
+  fill: var(--paper);
+  stroke: var(--moss);
+  stroke-width: 1.35;
+  vector-effect: non-scaling-stroke;
+}
+
+/* CATEGORY NODE = the parent / camera target. */
+.graph-category-node {
+  --category-color: var(--ink);
+  cursor: pointer;
+  outline: none;
+  opacity: 1;
+  transition: opacity .34s ease, filter .34s ease;
+}
+.graph-category-node.audio-category { --category-color: var(--tree-audio); }
+.graph-category-node.video-category { --category-color: var(--tree-video); }
+.graph-category-node.future-category { --category-color: var(--tree-future); }
+.graph-category-node .category-ring,
+.graph-category-node .category-core,
+.graph-category-node .category-label {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill .22s ease, stroke-width .22s ease, transform .36s cubic-bezier(.16,.88,.23,1.18), opacity .22s ease;
+}
+.graph-category-node .category-ring {
+  fill: var(--paper);
+  stroke: var(--category-color);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.graph-category-node .category-core { fill: var(--ink); }
+.graph-category-node .category-label {
+  fill: var(--category-color);
+  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .18em;
+}
+.graph-category-node:hover .category-ring,
+.graph-category-node:focus-visible .category-ring,
+.graph-category-node[aria-pressed="true"] .category-ring {
+  fill: var(--category-color);
+  stroke-width: 2.35;
+  transform: scale(1.13);
+}
+.graph-category-node:hover .category-core,
+.graph-category-node:focus-visible .category-core,
+.graph-category-node[aria-pressed="true"] .category-core {
+  fill: var(--ink);
+  transform: scale(.84);
+}
+.graph-category-node:hover .category-label,
+.graph-category-node:focus-visible .category-label,
+.graph-category-node[aria-pressed="true"] .category-label {
+  transform: translateY(-2px);
+}
+
+/* When a branch is focused, unrelated structure recedes rather than merely
+   being cropped by the camera. This creates a much stronger sense of entering it. */
+.project-graph.is-focused [data-branch],
+.project-graph.is-focused .graph-root-node,
+.project-graph.is-focused .graph-intermediate-node {
+  transition: opacity .34s ease, filter .34s ease;
+}
+.project-graph.is-focused [data-branch].is-muted-branch,
+.project-graph.is-focused .graph-root-node,
+.project-graph.is-focused .graph-intermediate-node {
+  opacity: .07;
+  filter: blur(.45px);
+  pointer-events: none;
+}
+.project-graph.is-focused [data-branch].is-focus-branch {
+  opacity: 1;
+}
+.project-graph.is-focused .graph-category-node.is-focus-branch .category-ring {
+  animation: categoryBloom .82s cubic-bezier(.18,.9,.22,1.15) both;
+}
+.project-graph.is-focused .graph-project-node.is-focus-branch,
+.project-graph.is-focused .graph-empty-node.is-focus-branch {
+  animation: leafArrive .64s cubic-bezier(.18,.86,.25,1.08) both;
+  animation-delay: var(--branch-delay, .12s);
+}
+@keyframes categoryBloom {
+  0% { transform: scale(.68); }
+  58% { transform: scale(1.25); }
+  100% { transform: scale(1.13); }
+}
+@keyframes leafArrive {
+  0% { opacity: 0; transform: translateY(9px) scale(.76); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* ROOT NODE = ABOUT */
+.graph-root-node { cursor: pointer; outline: none; text-decoration: none; }
+.graph-root-node .root-ring,
+.graph-root-node .root-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill .2s ease, transform .24s cubic-bezier(.2,.8,.2,1);
+}
+.graph-root-node .root-ring {
+  fill: var(--paper);
+  stroke: var(--moss-dark);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+.graph-root-node .root-core { fill: var(--moss-dark); }
+.graph-root-node .root-label {
+  fill: var(--moss-dark);
+  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  transition: transform .24s cubic-bezier(.2,.8,.2,1);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.graph-root-node:hover .root-ring,
+.graph-root-node:focus-visible .root-ring { fill: var(--moss-dark); transform: scale(1.18); }
+.graph-root-node:hover .root-core,
+.graph-root-node:focus-visible .root-core { fill: var(--paper); transform: scale(.88); }
+.graph-root-node:hover .root-label,
+.graph-root-node:focus-visible .root-label { transform: translateY(-1px); }
+
+/* EMPTY LEAF = future growth. Smaller than the parent category. */
+.graph-empty-node circle {
+  fill: var(--paper);
+  stroke: rgba(26,26,26,.36);
+  stroke-width: 1.35;
+  vector-effect: non-scaling-stroke;
+}
+.graph-empty-node.audio-empty circle { stroke: var(--tree-audio); opacity: .42; }
+.graph-empty-node.video-empty circle { stroke: var(--tree-video); opacity: .42; }
+.graph-empty-node.future-empty circle { stroke: var(--tree-future); opacity: .38; }
+
+/* ACTIVE PROJECT LEAVES = deliberately smaller than category nodes. */
+.graph-project-node {
+  --project-color: var(--ink);
+  color: var(--project-color);
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+.graph-project-node.audio-project { --project-color: var(--tree-audio); }
+.graph-project-node.video-project { --project-color: var(--tree-video); }
+.graph-project-node.future-project { --project-color: var(--tree-future); }
+.graph-project-node .node-ring,
+.graph-project-node .node-core,
+.graph-project-node .node-label,
+.graph-project-node .node-type {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.graph-project-node .node-ring {
+  fill: var(--paper);
+  stroke: var(--project-color);
+  stroke-width: 1.35;
+  vector-effect: non-scaling-stroke;
+  transition: fill .24s ease, stroke-width .24s ease, transform .30s cubic-bezier(.2,.8,.2,1);
+}
+.graph-project-node .node-core {
+  fill: var(--ink);
+  transition: fill .24s ease, transform .30s cubic-bezier(.2,.8,.2,1);
+}
+.graph-project-node .node-label {
+  fill: var(--ink);
+  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10.5px;
+  font-weight: 520;
+  letter-spacing: .01em;
+  transition: opacity .22s ease, transform .30s cubic-bezier(.2,.8,.2,1);
+}
+.graph-project-node .node-type {
+  fill: var(--project-color);
+  opacity: .72;
+  font-size: 6.8px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  transition: opacity .22s ease, transform .30s cubic-bezier(.2,.8,.2,1);
+}
+.graph-project-node:hover .node-ring,
+.graph-project-node:focus-visible .node-ring {
+  fill: var(--project-color);
+  stroke-width: 1.9;
+  transform: translateY(-2px) scale(1.38);
+}
+.graph-project-node:hover .node-core,
+.graph-project-node:focus-visible .node-core { fill: var(--ink); transform: translateY(-2px) scale(.92); }
+.graph-project-node:hover .node-label,
+.graph-project-node:focus-visible .node-label { opacity: .62; transform: translateY(-4px); }
+.graph-project-node:hover .node-type,
+.graph-project-node:focus-visible .node-type { opacity: .62; transform: translateY(-4px); }
+
+/* ============================================================
+   ALL PROJECTS = ARCHIVE TREE
+   A readable/indexed interpretation of the same branching system used Home.
+   ============================================================ */
+#page-projects {
+  --archive-stem-x: 2.15rem;
+}
+.projects-archive-intro {
+  max-width: 46rem;
+  margin: 1.2rem 0 3.8rem;
+  color: var(--muted);
+  font-size: clamp(.98rem, 1.7vw, 1.12rem);
+}
+.archive-tree {
+  position: relative;
+  max-width: 58rem;
+  margin: 0 0 2rem;
+  padding: .25rem 0 2rem;
+}
+.archive-tree::before {
+  content: "";
+  position: absolute;
+  top: .45rem;
+  bottom: 0;
+  left: var(--archive-stem-x);
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(79,94,73,.58), rgba(79,94,73,.10));
+}
+.archive-medium {
+  --archive-color: var(--moss);
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.3rem minmax(0,1fr);
+  gap: clamp(1.1rem, 3vw, 2.4rem);
+  padding: 0 0 clamp(3.2rem, 7vw, 5rem);
+}
+.archive-medium.audio { --archive-color: var(--tree-audio); }
+.archive-medium.video { --archive-color: var(--tree-video); }
+.archive-medium.growth { --archive-color: var(--tree-future); }
+.archive-parent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: .5rem;
+}
+.archive-parent-node {
+  width: 2.7rem;
+  aspect-ratio: 1;
+  border: 2px solid var(--archive-color);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 .48rem var(--paper);
+  position: relative;
+}
+.archive-parent-node::after {
+  content: "";
+  position: absolute;
+  inset: .78rem;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.archive-branch {
+  position: relative;
+  min-width: 0;
+}
+.archive-branch::before {
+  content: "";
+  position: absolute;
+  top: 1.82rem;
+  left: calc(-1 * clamp(1.1rem, 3vw, 2.4rem));
+  width: clamp(1.1rem, 3vw, 2.4rem);
+  height: 1px;
+  background: var(--archive-color);
+  opacity: .68;
+}
+.archive-medium-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1.15rem;
+  padding: .45rem 0 .9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--archive-color) 28%, transparent);
+}
+.archive-medium-head h3 {
+  margin: 0;
+  color: var(--archive-color);
+  font-size: .73rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.archive-medium-count { color: var(--muted); font-size: .7rem; letter-spacing: .08em; }
+.archive-leaves { display: grid; gap: .25rem; }
+.archive-leaf {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0,1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 4.75rem;
+  padding: .85rem .15rem .85rem 0;
+  text-decoration: none;
+  border-bottom: 1px solid var(--soft-line);
+}
+.archive-leaf::before {
+  content: "";
+  width: .68rem;
+  height: .68rem;
+  border: 1.5px solid var(--archive-color);
+  border-radius: 50%;
+  background: var(--paper);
+  transition: transform .28s cubic-bezier(.2,.8,.2,1), background .2s ease;
+}
+.archive-leaf::after {
+  content: "";
+  position: absolute;
+  left: -1.85rem;
+  top: 50%;
+  width: 1.85rem;
+  height: 1px;
+  background: var(--archive-color);
+  opacity: .34;
+  transform-origin: right center;
+  transition: transform .28s ease, opacity .2s ease;
+}
+.archive-leaf-title {
+  font-size: clamp(1.28rem, 3.2vw, 2.25rem);
+  font-weight: 350;
+  letter-spacing: -.025em;
+  transition: transform .28s cubic-bezier(.2,.8,.2,1);
+}
+.archive-leaf-meta {
+  color: var(--muted);
+  font-size: .72rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  text-align: right;
+}
+.archive-leaf:hover::before,
+.archive-leaf:focus-visible::before { transform: scale(1.45); background: var(--archive-color); }
+.archive-leaf:hover::after,
+.archive-leaf:focus-visible::after { transform: scaleX(1.14); opacity: .72; }
+.archive-leaf:hover .archive-leaf-title,
+.archive-leaf:focus-visible .archive-leaf-title { transform: translateX(.45rem); }
+.archive-growth-note {
+  margin: .35rem 0 0;
+  max-width: 31rem;
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   INDIVIDUAL PROJECT PAGES
+   This is where the full media + description live.
+   ============================================================ */
+.back-link {
+  display: inline-block;
+  margin-bottom: 2rem;
+  color: var(--muted);
+  font-size: .78rem;
+  text-decoration: none;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.back-link:hover { color: var(--ink); }
+
+.project-detail-head {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-bottom: 2.2rem;
+  padding: clamp(1.35rem, 3vw, 2rem) 0 1.35rem;
+  border-bottom: 1px solid var(--line);
+}
+
+/* The project-page waveform sits behind the title text. */
+.project-title-wave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: .28;
+  pointer-events: none;
+}
+
+.project-detail-head > *:not(.project-title-wave) {
+  position: relative;
+  z-index: 1;
+}
+
+.project-detail-head h2 {
+  margin: 0 0 .5rem;
+  max-width: none;
+  white-space: nowrap;
+  font-size: clamp(1.9rem, 6.2vw, 5.2rem);
+  font-weight: 300;
+  line-height: .95;
+  letter-spacing: -.055em;
+}
+.project-detail-head .meta { margin: 0; color: var(--muted); font-size: .86rem; }
+
+.project-media { margin: 0 0 2.3rem; }
+.project-media figcaption { margin-top: .55rem; color: var(--muted); font-size: .82rem; }
+img, video { max-width: 100%; display: block; }
+video { width: 100%; height: auto; background: #111; }
+audio { width: 100%; display: block; }
+
+/*
+   RESPONSIVE WIDTH SAFETY
+   Canvas/SVG/media should never force the document wider than the screen.
+*/
+canvas, svg, img, video, audio {
+  max-width: 100%;
+}
+.media-status { display: none; color: var(--muted); font-size: .8rem; margin-top: .35rem; }
+.media-status.error { display: block; color: #a00000; }
+
+.project-copy {
+  max-width: 46rem;
+  display: grid;
+  grid-template-columns: 8rem minmax(0,1fr);
+  gap: 1.5rem;
+  margin: 0 0 2.2rem;
+}
+.project-copy h3 {
+  margin: .18rem 0 0;
+  font-size: .7rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.project-copy p { margin: 0; }
+
+.accessibility-note {
+  max-width: 46rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.accessibility-note summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.accessibility-note p { max-width: 40rem; margin: 1rem 0 .25rem; }
+
+/* COWARD / MORE: optional online links.
+   The portfolio remains fully usable offline; these destinations only
+   require internet after the visitor chooses to open them. */
+.online-extras {
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--line);
+}
+.online-extras h4 {
+  margin: 0 0 .35rem;
+  font-size: .72rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.online-extras-note {
+  margin: 0 0 1rem !important;
+  color: var(--muted);
+  font-size: .82rem;
+}
+.online-link-list {
+  display: grid;
+  gap: .55rem;
+  margin-top: .9rem;
+}
+.online-link {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, .8fr) minmax(0, 1.8fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: .85rem 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+.online-link:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.online-link-platform {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.online-link-title {
+  font-size: .95rem;
+}
+.online-link-action {
+  color: var(--muted);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition: transform .2s ease, color .2s ease;
+}
+.online-link:hover .online-link-action,
+.online-link:focus-visible .online-link-action {
+  color: var(--ink);
+  transform: translateX(3px);
+}
+@media (max-width: 560px) {
+  .online-link {
+    grid-template-columns: 1fr auto;
+    gap: .35rem .75rem;
+  }
+  .online-link-title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    color: var(--muted);
+    font-size: .86rem;
+  }
+  .online-link-action {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/* ============================================================
+   ABOUT = ROOT / GROWTH SCROLL
+   The portrait slot is intentionally empty until a real image is supplied.
+   Text blocks reveal from alternating sides as the root SVG grows downward.
+   ============================================================ */
+#page-about {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  padding-bottom: clamp(8rem, 16vw, 13rem);
+}
+.about-roots {
+  position: absolute;
+  z-index: -1;
+  top: 8.2rem;
+  left: 50%;
+  width: min(100vw, 72rem);
+  height: calc(100% - 7rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: .9;
+}
+.about-root-path {
+  fill: none;
+  stroke: var(--moss);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--root-progress, 0));
+}
+.about-root-path.earth {
+  stroke: var(--earth);
+  opacity: .54;
+}
+.about-root-path.soft { opacity: .34; }
+.about-root-node { fill: var(--paper); stroke: var(--moss); stroke-width: 1.15; }
+.about-head-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1.15fr) minmax(15rem,.85fr);
+  gap: clamp(2rem, 7vw, 6rem);
+  align-items: end;
+  margin-bottom: clamp(6rem, 13vw, 10rem);
+}
+.about-heading-copy { max-width: 38rem; }
+.about-heading-copy .page-title { max-width: none; }
+.about-intro-line {
+  max-width: 34rem;
+  margin: 1.3rem 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.8vw, 1.14rem);
+}
+.about-portrait {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 4 / 5;
+  border: 1px solid rgba(79,94,73,.28);
+  background:
+    linear-gradient(145deg, rgba(113,128,106,.08), transparent 54%),
+    repeating-linear-gradient(0deg, transparent 0 23px, rgba(79,94,73,.055) 24px);
+  overflow: hidden;
+}
+.about-portrait::before,
+.about-portrait::after {
+  content: "";
+  position: absolute;
+  background: rgba(79,94,73,.20);
+}
+.about-portrait::before { width: 1px; top: 0; bottom: 0; left: 50%; }
+.about-portrait::after { height: 1px; left: 0; right: 0; top: 50%; }
+.about-portrait-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--moss-dark);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.about-portrait figcaption {
+  position: absolute;
+  left: .75rem;
+  bottom: .65rem;
+  color: var(--muted);
+  font-size: .66rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.about-story {
+  position: relative;
+  display: grid;
+  gap: clamp(7rem, 15vw, 12rem);
+  max-width: 60rem;
+  margin: 0 auto;
+}
+.about-story-block {
+  width: min(39rem, 76%);
+  font-size: clamp(1.2rem, 2.5vw, 1.75rem);
+  font-weight: 350;
+  line-height: 1.55;
+  letter-spacing: -.015em;
+}
+.about-story-block:nth-child(even) { margin-left: auto; }
+.about-story-block p { margin: 0; }
+.about-reveal {
+  opacity: 0;
+  transform: translateX(-5rem) scale(.97);
+  filter: blur(3px);
+  transition: opacity .78s ease, transform .92s cubic-bezier(.16,.84,.22,1), filter .72s ease;
+}
+.about-story-block:nth-child(even).about-reveal { transform: translateX(5rem) scale(.97); }
+.about-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+.about-growth-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+  margin-bottom: 1rem;
+  color: var(--moss-dark);
+  font-size: .65rem;
+  font-weight: 750;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+.about-growth-marker::before {
+  content: "";
+  width: .55rem;
+  height: .55rem;
+  border: 1.5px solid var(--moss);
+  border-radius: 50%;
+  background: var(--paper);
+}
+.about-future-slot {
+  min-height: 7rem;
+  border-top: 1px solid rgba(79,94,73,.14);
+  color: transparent;
+  user-select: none;
+  pointer-events: none;
+}
+
+
+footer {
+  margin: 5rem 0 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+/* PHONE / SMALL SCREEN */
+@media (max-width: 700px) {
+  .project-graph-wrap { padding: 0; }
+  .graph-project-node .node-label { font-size: 12px; }
+  .graph-project-node .node-type { font-size: 7.5px; }
+  body { padding: 1rem; }
+  .identity-intro {
+    margin-top: -1rem;
+    padding-top: 1.8rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .nav-inner { width: min(calc(100% - 2rem), 68rem); gap: .8rem; }
+  .nav-brand { display: none; }
+  .nav-links {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    font-size: .75rem;
+    letter-spacing: .08em;
+  }
+  .work-grid { grid-template-columns: 1fr; }
+  .work-card { min-height: 12rem; }
+  .archive-medium { grid-template-columns: 3.4rem minmax(0,1fr); gap: 1rem; }
+  #page-projects { --archive-stem-x: 1.7rem; }
+  .archive-parent-node { width: 2.2rem; }
+  .archive-leaf { grid-template-columns: .9rem minmax(0,1fr); gap: .7rem; }
+  .archive-leaf-meta { grid-column: 2; text-align: left; }
+  .archive-leaf::after { left: -1rem; width: 1rem; }
+  .about-head-grid { grid-template-columns: 1fr; }
+  .about-portrait { width: min(78vw, 24rem); margin-left: auto; }
+  .about-story-block { width: 88%; }
+  .about-reveal { transform: translateX(-2.5rem) scale(.98); }
+  .about-story-block:nth-child(even).about-reveal { transform: translateX(2.5rem) scale(.98); }
+  .project-copy { grid-template-columns: 1fr; gap: .6rem; }
+  .project-detail-head h2 {
+    font-size: clamp(1.45rem, 7.4vw, 2.5rem);
+    letter-spacing: -.05em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .graph-project-node .node-ring,
+  .graph-project-node .node-core,
+  .graph-project-node .node-label,
+  .graph-project-node .node-type,
+  .graph-root-node .root-ring,
+  .graph-root-node .root-core,
+  .archive-leaf-title, .archive-leaf,
+  .about-reveal,
+  .nav-inner, .nav-brand { transition: none; }
+  .project-graph.is-focused .graph-category-node.is-focus-branch .category-ring,
+  .project-graph.is-focused .graph-project-node.is-focus-branch,
+  .project-graph.is-focused .graph-empty-node.is-focus-branch { animation: none; }
+  .about-reveal { opacity: 1; transform: none; filter: none; }
+}
+
+
+/* ============================================================
+   CALMER SCALE + SOFTER TYPOGRAPHY PASS
+   This layer intentionally reduces the overall visual volume of the site.
+   It comes last so the core layout remains easy to restore/tune later.
+   ============================================================ */
+:root {
+  --compact-nav-height: 3.55rem;
+}
+
+body {
+  max-width: 62rem;
+  font-family: "Candara", "Aptos", "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: .94rem;
+  line-height: 1.58;
+}
+
+.identity-intro {
+  padding-top: clamp(1.65rem, 4vw, 3rem);
+  padding-bottom: clamp(1.5rem, 3.2vw, 2.35rem);
+  padding-left: max(1.5rem, calc((100vw - 62rem) / 2 + 1.5rem));
+  padding-right: max(1.5rem, calc((100vw - 62rem) / 2 + 1.5rem));
+}
+.identity-eyebrow { font-size: .62rem; letter-spacing: .20em; }
+.identity-intro h1 {
+  max-width: 14ch;
+  font-family: "Candara", "Aptos", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-size: clamp(2.55rem, 6.7vw, 5.25rem);
+  font-weight: 300;
+  letter-spacing: -.035em;
+  line-height: .94;
+}
+.identity-subtitle {
+  margin-top: .75rem;
+  font-size: clamp(.72rem, 1.15vw, .88rem);
+  letter-spacing: .07em;
+}
+.identity-wave { opacity: var(--identity-wave-opacity, .58); }
+
+.nav-inner { width: min(calc(100% - 3rem), 62rem); }
+.nav-brand { font-size: .64rem; opacity: .56; }
+.nav-links {
+  width: min(64%, 34rem);
+  font-size: .82rem;
+  font-weight: 580;
+  letter-spacing: .10em;
+}
+.nav-links > a, .projects-nav-link { padding: .58rem .35rem; }
+.projects-nav-dropdown { width: min(20rem, calc(100vw - 2rem)); }
+.projects-nav-dropdown a { padding: .62rem .72rem; font-size: .68rem; }
+
+.site-page { padding-top: clamp(3rem, 6vw, 4.8rem); }
+.page-kicker { font-size: .64rem; letter-spacing: .15em; }
+.page-title {
+  font-family: "Candara", "Aptos", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-size: clamp(2.15rem, 5.3vw, 4.4rem);
+  line-height: 1;
+  letter-spacing: -.035em;
+}
+.page-intro { font-size: clamp(.9rem, 1.5vw, 1.02rem); margin-bottom: 2.8rem; }
+
+/* HOME TREE: smaller overall, smaller nodes, wider category spacing, shorter child branches. */
+.project-graph { width: 94%; height: auto; max-height: none; }
+.graph-edge { stroke-width: 1.15; }
+.graph-edge.is-focus-edge { stroke-width: 1.65; }
+.graph-category-node .category-ring { stroke-width: 1.55; }
+.graph-category-node .category-label {
+  font-family: "Candara", "Aptos", "Segoe UI", sans-serif;
+  font-size: 8.6px;
+  font-weight: 650;
+  letter-spacing: .14em;
+}
+.graph-category-node:hover .category-ring,
+.graph-category-node:focus-visible .category-ring,
+.graph-category-node[aria-pressed="true"] .category-ring {
+  stroke-width: 1.8;
+  transform: scale(1.10);
+}
+.graph-project-node .node-ring { stroke-width: 1.15; }
+.graph-project-node .node-label {
+  font-family: "Candara", "Aptos", "Segoe UI", sans-serif;
+  font-size: 8.5px;
+  font-weight: 450;
+}
+.graph-project-node .node-type { font-size: 5.7px; letter-spacing: .12em; }
+.graph-project-node:hover .node-ring,
+.graph-project-node:focus-visible .node-ring { stroke-width: 1.55; transform: translateY(-1px) scale(1.28); }
+.graph-root-node .root-label {
+  font-family: "Candara", "Aptos", "Segoe UI", sans-serif;
+  font-size: 7.7px;
+  font-weight: 580;
+}
+.tree-reset { padding: .5rem .7rem; font-size: .6rem; font-weight: 650; }
+
+/* ALL PROJECTS: same system, but much quieter than the previous pass. */
+.projects-archive-intro { max-width: 40rem; font-size: clamp(.88rem, 1.35vw, 1rem); margin-bottom: 3rem; }
+.archive-tree { max-width: 52rem; }
+.archive-medium { grid-template-columns: 3.5rem minmax(0,1fr); gap: clamp(.9rem, 2.4vw, 1.8rem); padding-bottom: clamp(2.6rem, 5vw, 4rem); }
+.archive-parent-node { width: 2.15rem; border-width: 1.5px; box-shadow: inset 0 0 0 .4rem var(--paper); }
+.archive-parent-node::after { inset: .64rem; }
+.archive-branch::before { top: 1.5rem; }
+.archive-medium-head { margin-bottom: .8rem; padding: .35rem 0 .7rem; }
+.archive-medium-head h3 { font-size: .66rem; font-weight: 700; letter-spacing: .14em; }
+.archive-medium-count { font-size: .64rem; }
+.archive-leaf { min-height: 3.9rem; gap: .8rem; padding: .68rem .1rem .68rem 0; }
+.archive-leaf::before { width: .55rem; height: .55rem; border-width: 1.2px; }
+.archive-leaf-title { font-size: clamp(1.05rem, 2.5vw, 1.72rem); font-weight: 330; }
+.archive-leaf-meta { font-size: .64rem; }
+.archive-growth-note { font-size: .82rem; }
+
+/* PROJECT PAGES: retain the waveform identity, but stop the title/media from dominating the viewport. */
+.back-link { margin-bottom: 1.5rem; font-size: .68rem; }
+.project-detail-head { margin-bottom: 1.8rem; padding: clamp(1.05rem, 2.3vw, 1.5rem) 0 1rem; }
+.project-detail-head h2 {
+  font-family: "Candara", "Aptos", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-size: clamp(1.7rem, 4.7vw, 4rem);
+  font-weight: 300;
+  letter-spacing: -.04em;
+}
+.project-detail-head .meta { font-size: .78rem; }
+.project-title-wave { opacity: .21; }
+.project-media { max-width: 58rem; margin-bottom: 1.9rem; }
+.project-media figcaption { font-size: .74rem; }
+.project-copy { max-width: 43rem; grid-template-columns: 7rem minmax(0,1fr); gap: 1.2rem; margin-bottom: 1.8rem; }
+.project-copy h3 { font-size: .64rem; }
+.project-copy p { font-size: .92rem; }
+.accessibility-note { max-width: 43rem; }
+.accessibility-note summary { font-size: .7rem; }
+
+/* ABOUT: smaller copy, smaller portrait, but roots are intentionally more visible. */
+#page-about { padding-bottom: clamp(7rem, 13vw, 10rem); }
+.about-roots {
+  width: min(100vw, 68rem);
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(79,94,73,.10));
+}
+.about-root-path {
+  stroke-width: 2.05;
+  opacity: .78;
+}
+.about-root-path.earth { opacity: .72; stroke-width: 1.9; }
+.about-root-path.soft { opacity: .55; stroke-width: 1.6; }
+.about-root-node { stroke-width: 1.55; }
+.about-head-grid {
+  grid-template-columns: minmax(0,1.25fr) minmax(12rem,.62fr);
+  gap: clamp(2rem, 6vw, 4.5rem);
+  margin-bottom: clamp(5rem, 10vw, 7.5rem);
+}
+.about-heading-copy { max-width: 34rem; }
+.about-intro-line { max-width: 30rem; font-size: clamp(.9rem, 1.45vw, 1rem); }
+.about-portrait { width: min(100%, 18rem); justify-self: end; }
+.about-portrait-placeholder { font-size: .61rem; font-weight: 650; letter-spacing: .12em; }
+.about-portrait figcaption { font-size: .6rem; }
+.about-story { gap: clamp(6rem, 12vw, 9rem); max-width: 54rem; }
+.about-story-block {
+  width: min(35rem, 72%);
+  font-family: "Candara", "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  font-size: clamp(.98rem, 1.85vw, 1.32rem);
+  font-weight: 320;
+  line-height: 1.65;
+  letter-spacing: -.008em;
+}
+.about-growth-marker { font-size: .59rem; font-weight: 680; letter-spacing: .13em; }
+.about-growth-marker::before { width: .46rem; height: .46rem; border-width: 1.2px; }
+.about-reveal { transform: translateX(-3.7rem) scale(.985); filter: blur(2px); }
+.about-story-block:nth-child(even).about-reveal { transform: translateX(3.7rem) scale(.985); }
+
+footer { font-size: .76rem; }
+
+@media (max-width: 700px) {
+  body { font-size: .91rem; }
+  .identity-intro h1 { font-size: clamp(2.35rem, 12vw, 3.8rem); }
+  .nav-links { font-size: .69rem; letter-spacing: .065em; }
+  .project-graph { width: 95%; height: 84%; }
+  .graph-project-node .node-label { font-size: 9.2px; }
+  .graph-project-node .node-type { font-size: 6.1px; }
+  .archive-medium { grid-template-columns: 2.9rem minmax(0,1fr); }
+  #page-projects { --archive-stem-x: 1.45rem; }
+  .archive-parent-node { width: 1.85rem; }
+  .about-portrait { width: min(65vw, 17rem); }
+  .about-story-block { width: 84%; }
+  .project-detail-head h2 { font-size: clamp(1.4rem, 6.7vw, 2.25rem); }
+}
+
+
+/* ============================================================
+   DEDICATED BRANCH FOCUS COMPOSITION
+   The normal tree remains the overview. Once a medium is selected, a
+   separate full-viewport composition takes over below the compact nav.
+   This lets the focused branch use calmer type, tighter geometry, and a
+   deliberately oversized parent node without distorting the overview tree.
+   ============================================================ */
+.branch-focus-shell {
+  position: fixed;
+  z-index: 45;
+  top: var(--compact-nav-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 106%, rgba(113,128,106,.11), transparent 38%),
+    var(--paper);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(1.022);
+  transform-origin: 50% 62%;
+  transition:
+    opacity .34s ease,
+    transform .72s cubic-bezier(.16,.82,.2,1),
+    visibility 0s linear .72s;
+}
+.branch-focus-shell.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition-delay: 0s;
+}
+.branch-focus-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.branch-focus-group {
+  --focus-color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transform-box: view-box;
+  transform-origin: center bottom;
+  transform: translateY(18px) scale(.985);
+  transition: opacity .28s ease, transform .62s cubic-bezier(.16,.82,.2,1);
+}
+.branch-focus-group.audio-focus { --focus-color: var(--tree-audio); }
+.branch-focus-group.video-focus { --focus-color: var(--tree-video); }
+.branch-focus-group.future-focus { --focus-color: var(--tree-future); }
+.branch-focus-group.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+/* The focused branch is intentionally calmer than the overview zoom used to be. */
+.focus-branch-line {
+  fill: none;
+  stroke: var(--focus-color);
+  stroke-width: 1.45;
+  stroke-opacity: .72;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
+.focus-project {
+  color: var(--focus-color);
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+.focus-project .focus-node-ring {
+  fill: var(--paper);
+  stroke: var(--focus-color);
+  stroke-width: 1.55;
+  vector-effect: non-scaling-stroke;
+  transition: fill .22s ease, transform .24s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.focus-project .focus-node-core {
+  fill: var(--ink);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform .24s ease;
+}
+.focus-project:hover .focus-node-ring,
+.focus-project:focus-visible .focus-node-ring {
+  fill: var(--focus-color);
+  transform: scale(1.14);
+}
+.focus-project:hover .focus-node-core,
+.focus-project:focus-visible .focus-node-core { transform: scale(.88); }
+.focus-project-title {
+  fill: var(--ink);
+  font-family: "Candara", "Aptos", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-size: 20px;
+  font-weight: 320;
+  letter-spacing: -.018em;
+}
+.focus-project-meta {
+  fill: var(--focus-color);
+  opacity: .72;
+  font-family: "Candara", "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  font-size: 8px;
+  font-weight: 560;
+  letter-spacing: .14em;
+}
+.focus-empty-ring {
+  fill: var(--paper);
+  stroke: var(--focus-color);
+  stroke-width: 1.35;
+  stroke-opacity: .50;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The parent becomes a deliberately oversized half-circle at the bottom edge. */
+.focus-parent-ring {
+  fill: var(--focus-color);
+  stroke: var(--focus-color);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.focus-parent-core { fill: var(--ink); }
+.focus-parent-label {
+  fill: var(--focus-color);
+  font-family: "Candara", "Aptos", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-size: 27px;
+  font-weight: 520;
+  letter-spacing: .16em;
+}
+.focus-parent-hint {
+  fill: var(--moss-dark);
+  opacity: .52;
+  font-family: "Candara", "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  font-size: 7.5px;
+  font-weight: 560;
+  letter-spacing: .12em;
+}
+
+/* In focus mode the reset control belongs to the viewport, not the scrolled tree. */
+.tree-reset.is-visible {
+  position: fixed;
+  z-index: 48;
+  top: calc(var(--compact-nav-height) + .9rem);
+  left: max(1rem, calc((100vw - 62rem) / 2 + 1.5rem));
+}
+
+@media (max-width: 700px) {
+  .focus-project-title { font-size: 17px; }
+  .focus-project-meta { font-size: 7px; }
+  .focus-parent-label { font-size: 23px; }
+  .tree-reset.is-visible { left: 1rem; }
+}
+
+
+/* ============================================================
+   SAME-PAGE FOCUS REVEAL + PHONE TREE COMPOSITION
+   The focused branch is an overlay inside Home, not a route/page change.
+   A circular reveal grows from the category the visitor selected so the
+   focused composition feels like the tree itself opening up.
+   ============================================================ */
+.branch-focus-shell {
+  --focus-origin-x: 50vw;
+  --focus-origin-y: 55vh;
+  clip-path: circle(0 at var(--focus-origin-x) var(--focus-origin-y));
+  -webkit-clip-path: circle(0 at var(--focus-origin-x) var(--focus-origin-y));
+  transition:
+    clip-path .76s cubic-bezier(.16,.82,.2,1),
+    -webkit-clip-path .76s cubic-bezier(.16,.82,.2,1),
+    opacity .28s ease,
+    transform .72s cubic-bezier(.16,.82,.2,1),
+    visibility 0s linear .76s;
+}
+.branch-focus-shell.is-visible {
+  clip-path: circle(160vmax at var(--focus-origin-x) var(--focus-origin-y));
+  -webkit-clip-path: circle(160vmax at var(--focus-origin-x) var(--focus-origin-y));
+  transition-delay: 0s;
+}
+.project-tree-mobile,
+.branch-focus-mobile { display: none; }
+
+@media (max-width: 700px) {
+  /* The overall site gets a little more breathing room on a narrow screen. */
+  body {
+    padding: .82rem;
+    max-width: 100%;
+  }
+  .identity-intro {
+    margin-top: -.82rem;
+    padding: 1.45rem .9rem 1.35rem;
+  }
+  .identity-eyebrow { font-size: .56rem; }
+  .identity-intro h1 {
+    max-width: 10ch;
+    font-size: clamp(2.1rem, 11.4vw, 3.15rem);
+    line-height: .98;
+  }
+  .identity-subtitle { font-size: .69rem; }
+
+  .nav-inner {
+    width: calc(100% - 1.15rem);
+    min-height: var(--compact-nav-height);
+  }
+  .nav-links {
+    font-size: clamp(.58rem, 2.7vw, .68rem);
+    letter-spacing: .045em;
+  }
+  .nav-links > a,
+  .projects-nav-link { padding-left: .15rem; padding-right: .15rem; }
+  .projects-nav-toggle { padding-right: .06rem; }
+
+  /* Do not squeeze the desktop diagram. Use the portrait composition. */
+  #page-home,
+  .home-tree-stage {
+    min-height: 0;
+  }
+  .home-tree-stage {
+    display: block;
+    padding: .55rem .25rem 1.25rem;
+  }
+  .project-graph-wrap {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+    background: radial-gradient(circle at 50% 82%, rgba(113,128,106,.095), transparent 34%);
+  }
+  .project-tree-desktop { display: none; }
+  .project-tree-mobile {
+    display: block;
+    width: min(100%, 27rem);
+    height: auto;
+    margin: 0 auto;
+    overflow: visible;
+  }
+
+  /* Larger tap targets / stronger hierarchy relative to the phone screen. */
+  .project-tree-mobile .graph-category-node .category-label {
+    font-size: 10px;
+    letter-spacing: .12em;
+  }
+  .project-tree-mobile .graph-project-node .node-label {
+    font-size: 10.5px;
+    font-weight: 500;
+  }
+  .project-tree-mobile .graph-project-node .node-type {
+    font-size: 6.5px;
+  }
+  .project-tree-mobile .graph-root-node .root-label { font-size: 8.5px; }
+  .project-tree-mobile .graph-edge { stroke-width: 1.3; }
+  .project-tree-mobile .graph-category-node .category-ring { stroke-width: 1.65; }
+  .project-tree-mobile .graph-project-node .node-ring { stroke-width: 1.3; }
+
+  /* Portrait-focused branch replaces the wide desktop scene. */
+  .branch-focus-desktop { display: none; }
+  .branch-focus-mobile {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .branch-focus-shell {
+    top: var(--compact-nav-height);
+    background:
+      radial-gradient(circle at 50% 112%, rgba(113,128,106,.14), transparent 43%),
+      var(--paper);
+  }
+  .branch-focus-mobile .focus-project-title {
+    font-size: 16px;
+    font-weight: 340;
+  }
+  .branch-focus-mobile .focus-project-meta { font-size: 7.4px; }
+  .branch-focus-mobile .focus-parent-label {
+    font-size: 25px;
+    letter-spacing: .14em;
+  }
+  .branch-focus-mobile .focus-parent-hint {
+    font-size: 6.6px;
+    letter-spacing: .10em;
+  }
+  .branch-focus-mobile .focus-branch-line { stroke-width: 1.4; }
+  .tree-reset.is-visible {
+    top: calc(var(--compact-nav-height) + .55rem);
+    left: .75rem;
+    padding: .48rem .62rem;
+    font-size: .56rem;
+  }
+
+  /* Content pages: prevent desktop assumptions from creating overflow. */
+  body.route-project .site-page,
+  body.route-about .site-page,
+  body.route-projects .site-page {
+    padding-top: calc(var(--compact-nav-height) + 1.65rem);
+  }
+  .page-title {
+    max-width: 100%;
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+  .projects-archive-intro { margin-bottom: 2.15rem; }
+  .archive-medium {
+    grid-template-columns: 2.35rem minmax(0,1fr);
+    gap: .7rem;
+  }
+  #page-projects { --archive-stem-x: 1.175rem; }
+  .archive-parent-node { width: 1.55rem; }
+  .archive-leaf-title { font-size: clamp(1rem, 5.7vw, 1.35rem); }
+  .archive-leaf-meta { font-size: .59rem; }
+
+  .project-detail-head h2 {
+    white-space: normal;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: clamp(1.55rem, 9vw, 2.35rem);
+  }
+  .project-detail-head .meta { font-size: .7rem; }
+  .project-media { width: 100%; }
+  .project-copy { grid-template-columns: 1fr; gap: .45rem; }
+  .project-copy p { font-size: .89rem; }
+
+  .about-head-grid { gap: 1.65rem; }
+  .about-portrait {
+    width: min(72vw, 16rem);
+    margin: .35rem auto 0;
+    justify-self: center;
+  }
+  .about-story { gap: 5.5rem; }
+  .about-story-block {
+    width: 91%;
+    font-size: clamp(.97rem, 5vw, 1.12rem);
+  }
+  .about-roots {
+    width: 118vw;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .about-root-path { stroke-width: 2.3; opacity: .83; }
+  .about-root-path.earth { stroke-width: 2.05; opacity: .78; }
+  .about-root-path.soft { stroke-width: 1.75; opacity: .61; }
+
+  footer { font-size: .67rem; }
+}
+
+@media (max-width: 410px) {
+  .nav-links { font-size: .56rem; }
+  .project-tree-mobile { width: 100%; }
+  .branch-focus-mobile .focus-project-title { font-size: 15px; }
+  .branch-focus-mobile .focus-parent-label { font-size: 23px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branch-focus-shell,
+  .branch-focus-shell.is-visible {
+    clip-path: none;
+    -webkit-clip-path: none;
+  }
+}
+
+
+  
+
+/* ============================================================
+   CONTINUOUS BRANCH ENTRY — no clip mask / no hidden first zoom
+   ============================================================ */
+.branch-focus-shell,
+.branch-focus-shell.is-visible {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+.branch-focus-shell {
+  --focus-origin-x: 50vw;
+  --focus-origin-y: 55vh;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: none;
+  overflow: visible !important;
+  transition: opacity .46s cubic-bezier(.2,.72,.2,1), visibility 0s linear .76s;
+}
+.branch-focus-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 106%, rgba(113,128,106,.11), transparent 38%),
+    var(--paper);
+  opacity: 0;
+  transition: opacity .58s ease;
+}
+.branch-focus-shell.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+.branch-focus-shell.is-visible::before { opacity: 1; }
+.branch-focus-svg {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: scale(.12);
+  transform-origin: var(--focus-origin-x) calc(var(--focus-origin-y) - var(--compact-nav-height));
+  transition:
+    transform .76s cubic-bezier(.14,.86,.18,1),
+    opacity .42s ease;
+  will-change: transform, opacity;
+}
+.branch-focus-shell.is-visible .branch-focus-svg {
+  opacity: 1;
+  transform: scale(1);
+}
+.branch-focus-group {
+  transform: none !important;
+  transition: opacity .28s ease !important;
+}
+.project-graph [data-branch] { transition: opacity .38s ease; }
+
+/* ============================================================
+   PROJECT PAGES — quiet glistening field
+   ============================================================ */
+.site-page[data-page^="project-"] {
+  position: relative;
+  isolation: isolate;
+}
+#page-project-fourth-ground,
+#page-project-call-name { --project-accent: var(--tree-audio); }
+#page-project-coward { --project-accent: var(--tree-video); }
+.site-page[data-page^="project-"] > *:not(.project-sparkles) {
+  position: relative;
+  z-index: 2;
+}
+.project-sparkles {
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.project-sparkles i {
+  --spark-size: calc(8px * var(--ss));
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: var(--spark-size);
+  height: var(--spark-size);
+  color: var(--project-accent);
+  opacity: 0;
+  transform: translate(-50%,-50%) scale(.25) rotate(0deg);
+  animation: project-glint 9s var(--sd) ease-in-out infinite;
+}
+.project-sparkles i::before,
+.project-sparkles i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: currentColor;
+  border-radius: 999px;
+  transform: translate(-50%,-50%);
+  box-shadow: 0 0 9px color-mix(in srgb, currentColor 26%, transparent);
+}
+.project-sparkles i::before { width: 1px; height: 100%; }
+.project-sparkles i::after { width: 100%; height: 1px; }
+@keyframes project-glint {
+  0%, 75%, 100% { opacity: 0; transform: translate(-50%,-50%) scale(.25) rotate(0deg); }
+  81% { opacity: .12; }
+  84% { opacity: .62; transform: translate(-50%,-50%) scale(1) rotate(25deg); }
+  88% { opacity: .08; transform: translate(-50%,-50%) scale(.55) rotate(48deg); }
+}
+
+/* ============================================================
+   PROJECT PROCESS / GROWING ROOT GALLERIES
+   ============================================================ */
+.project-process {
+  --project-root-progress: 0;
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: clamp(4.5rem, 9vw, 7rem);
+  padding: clamp(4.5rem, 8vw, 6.5rem) max(1.5rem, calc((100vw - 68rem)/2 + 1.5rem)) clamp(5rem, 10vw, 8rem);
+  overflow: hidden;
+  background: linear-gradient(180deg, transparent, rgba(113,128,106,.035) 18%, rgba(113,128,106,.065) 72%, transparent);
+}
+.project-process-roots {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.project-root-path {
+  fill: none;
+  stroke: var(--moss-dark);
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  opacity: .56;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--project-root-progress));
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 2px rgba(54,68,49,.08));
+}
+.project-root-path.main { stroke-width: 2.05; opacity: .68; }
+.project-root-path.branch { stroke: var(--project-accent); opacity: .38; }
+.project-root-path.soft { opacity: .24; }
+.project-process-head,
+.process-gallery { position: relative; z-index: 1; }
+.project-process-head {
+  max-width: 31rem;
+  margin: 0 0 clamp(3.5rem, 7vw, 5.5rem);
+}
+.project-process-head h3 {
+  margin: .15rem 0 .75rem;
+  font-family: "Candara", "Aptos", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 320;
+  letter-spacing: -.035em;
+}
+.project-process-head > p:last-child { margin: 0; color: var(--muted); font-size: .86rem; }
+.process-gallery {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0,1fr));
+  gap: clamp(1.15rem, 3vw, 2.5rem);
+  align-items: start;
+}
+.process-photo {
+  margin: 0;
+  transform: rotate(var(--photo-tilt));
+  transform-origin: center;
+  transition: transform .45s cubic-bezier(.2,.8,.2,1), opacity .65s ease, filter .65s ease;
+}
+.process-photo:nth-child(1) { grid-column: 1 / span 6; }
+.process-photo:nth-child(2) { grid-column: 7 / span 6; margin-top: 4rem; }
+.process-photo:nth-child(3) { grid-column: 2 / span 6; margin-top: 1.2rem; }
+.process-photo:nth-child(4) { grid-column: 8 / span 5; margin-top: 5rem; }
+.process-gallery.single-process .process-photo {
+  grid-column: 3 / span 8;
+  width: 100%;
+}
+.process-photo img {
+  display: block;
+  width: 100%;
+  max-height: 34rem;
+  object-fit: contain;
+  background: rgba(26,26,26,.025);
+  border: 1px solid rgba(69,79,64,.15);
+  box-shadow: 0 1rem 3rem rgba(39,45,35,.07);
+}
+.process-photo figcaption {
+  margin-top: .55rem;
+  color: var(--muted);
+  font-size: .66rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.project-process-reveal {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateY(2rem) rotate(var(--photo-tilt,0deg));
+}
+.project-process-reveal.is-visible {
+  opacity: 1;
+  filter: none;
+  transform: translateY(0) rotate(var(--photo-tilt,0deg));
+}
+.project-process + .accessibility-note { margin-top: 1.75rem; }
+
+/* ============================================================
+   ABOUT PHOTO DECK — arrow-driven slide, not an autoplay carousel
+   ============================================================ */
+.about-photo-deck {
+  width: min(100%, 23rem);
+  border: 0;
+  overflow: visible;
+}
+.about-photo-deck::before,
+.about-photo-deck::after { display: none; }
+.about-photo-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid rgba(69,79,64,.20);
+  background: rgba(113,128,106,.055);
+  box-shadow: 0 1.1rem 3rem rgba(39,45,35,.08);
+}
+.about-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transform: translateX(0) scale(.985);
+  pointer-events: none;
+}
+.about-photo.is-current { opacity: 1; transform: translateX(0) scale(1); }
+.about-photo.slide-enter-right { opacity: 0; transform: translateX(22%) rotate(1.2deg) scale(.98); }
+.about-photo.slide-enter-left { opacity: 0; transform: translateX(-22%) rotate(-1.2deg) scale(.98); }
+.about-photo.slide-in {
+  opacity: 1;
+  transform: translateX(0) rotate(0deg) scale(1);
+  transition: transform .58s cubic-bezier(.18,.8,.2,1), opacity .42s ease;
+}
+.about-photo.slide-out-left {
+  opacity: 0;
+  transform: translateX(-18%) rotate(-1deg) scale(.985);
+  transition: transform .52s cubic-bezier(.18,.8,.2,1), opacity .38s ease;
+}
+.about-photo.slide-out-right {
+  opacity: 0;
+  transform: translateX(18%) rotate(1deg) scale(.985);
+  transition: transform .52s cubic-bezier(.18,.8,.2,1), opacity .38s ease;
+}
+.about-photo-controls {
+  display: grid;
+  grid-template-columns: 2.1rem 1fr 2.1rem;
+  align-items: center;
+  gap: .6rem;
+  margin-top: .55rem;
+}
+.about-photo-controls figcaption {
+  margin: 0;
+  text-align: center;
+  font-size: .61rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.about-photo-arrow {
+  appearance: none;
+  border: 1px solid rgba(69,79,64,.25);
+  background: rgba(246,244,237,.72);
+  color: var(--moss-dark);
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font: inherit;
+  transition: transform .18s ease, background .18s ease;
+}
+.about-photo-arrow:hover,
+.about-photo-arrow:focus-visible { transform: scale(1.07); background: rgba(113,128,106,.12); }
+
+@media (max-width:700px) {
+  .branch-focus-svg {
+    transform-origin: var(--focus-origin-x) calc(var(--focus-origin-y) - var(--compact-nav-height));
+  }
+  .project-process {
+    margin-top: 3.8rem;
+    padding: 4rem 1rem 5.2rem;
+  }
+  .project-process-head { margin-bottom: 3rem; }
+  .project-process-head h3 { font-size: clamp(1.6rem, 8vw, 2.25rem); }
+  .process-gallery { grid-template-columns: 1fr; gap: 2.35rem; }
+  .process-photo,
+  .process-photo:nth-child(n),
+  .process-gallery.single-process .process-photo {
+    grid-column: 1;
+    width: min(92%, 28rem);
+    margin: 0 auto;
+  }
+  .process-photo:nth-child(even) { margin-left: auto; margin-right: 0; }
+  .process-photo:nth-child(odd) { margin-left: 0; margin-right: auto; }
+  .process-photo img { max-height: 30rem; }
+  .project-root-path { stroke-width: 2.05; opacity: .62; }
+  .project-root-path.main { stroke-width: 2.5; opacity: .74; }
+  .about-photo-deck { width: min(88vw, 23rem); }
+  .about-photo-stage { aspect-ratio: 4 / 3; }
+  .project-sparkles i { --spark-size: calc(7px * var(--ss)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branch-focus-svg,
+  .branch-focus-shell,
+  .branch-focus-shell::before,
+  .about-photo,
+  .project-process-reveal { transition: none !important; }
+  .project-sparkles i { animation: none; display: none; }
+  .project-process-reveal { opacity: 1; filter: none; transform: rotate(var(--photo-tilt,0deg)); }
+}
+
+
+
+/* ============================================================
+   HOME — SCROLL-GROWN UPPER VINE BAND
+   These vines stay inside the open band ABOVE the project graph. They never
+   descend into the graph. As the user scrolls, the paths draw in at different
+   rates and shift very slightly, giving the otherwise static rootwork life.
+   ============================================================ */
+.home-tree-stage {
+  position: relative;
+  isolation: isolate;
+  --home-vine-progress: 0;
+}
+.home-roots {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 46%;
+  pointer-events: none;
+  overflow: visible;
+  opacity: .97;
+  filter: drop-shadow(0 0 4px rgba(79,94,73,.065));
+}
+.home-vine-path {
+  fill: none;
+  stroke: var(--moss);
+  stroke-width: 2.05;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .67;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: stroke-dashoffset, transform;
+}
+.home-vine-path.earth { stroke: var(--earth); stroke-width: 1.85; opacity: .56; }
+.home-vine-path.soft { stroke-width: 1.45; opacity: .39; }
+.home-vine-path.fine { stroke-width: 1.15; opacity: .33; }
+.home-vine-path.bold { stroke-width: 2.35; opacity: .72; }
+.project-graph-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 700px) {
+  .home-roots { height: 42%; }
+  .home-vine-path { stroke-width: 1.85; opacity: .61; }
+  .home-vine-path.earth { stroke-width: 1.65; opacity: .50; }
+  .home-vine-path.soft { stroke-width: 1.2; opacity: .34; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-vine-path { stroke-dashoffset: 0 !important; transform: none !important; }
+}
+
+/* ABOUT SOCIAL LINKS — directly underneath the photo deck. */
+.about-social-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .72rem;
+  margin: .95rem 0 0;
+}
+.about-social-link {
+  width: 2.55rem;
+  height: 2.55rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(79,94,73,.28);
+  border-radius: 50%;
+  color: var(--moss-dark);
+  background: rgba(255,254,249,.72);
+  text-decoration: none;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), background .22s ease, box-shadow .22s ease;
+}
+.about-social-link:hover,
+.about-social-link:focus-visible {
+  transform: translateY(-2px) scale(1.055);
+  background: rgba(113,128,106,.11);
+  box-shadow: 0 .55rem 1.4rem rgba(63,77,57,.09);
+}
+.about-social-link svg {
+  width: 1.22rem;
+  height: 1.22rem;
+  display: block;
+}
+.about-social-link.youtube svg,
+.about-social-link.soundcloud svg { fill: currentColor; }
+.about-social-link.soundcloud svg { width: 1.48rem; }
+.about-social-link.instagram svg { fill: none; stroke: currentColor; stroke-width: 1.75; }
+
+
+/* ABOUT PHOTO DECK — larger, portrait-first, and intentionally cropped
+   to keep the subject dominant regardless of source aspect ratio. */
+.about-photo-deck {
+  width: min(100%, 31rem);
+  max-width: none;
+}
+.about-photo-stage {
+  aspect-ratio: 4 / 3;
+  min-height: 23rem;
+}
+.about-photo {
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+.about-photo[src*="about-portrait-car"] { object-position: 40% 45%; }
+.about-photo[src*="about-portrait-street"] { object-position: 58% 35%; }
+.about-photo[src*="about-nature"] { object-position: 50% 52%; }
+.about-head-grid {
+  grid-template-columns: minmax(0,.9fr) minmax(22rem,1.1fr);
+  align-items: center;
+}
+.about-portrait { width: min(100%, 31rem); }
+
+/* COWARD — direct platform buttons immediately beneath the video. */
+.coward-social-links {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  margin: .9rem 0 0;
+}
+.coward-social-link {
+  width: 2.65rem;
+  height: 2.65rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--tree-video) 34%, var(--line));
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--tree-video) 82%, var(--ink));
+  background: rgba(255,254,249,.76);
+  text-decoration: none;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), background .22s ease, box-shadow .22s ease;
+}
+.coward-social-link:hover,
+.coward-social-link:focus-visible {
+  transform: translateY(-2px) scale(1.06);
+  background: color-mix(in srgb, var(--tree-video) 9%, var(--paper));
+  box-shadow: 0 .55rem 1.5rem rgba(80,55,45,.09);
+}
+.coward-social-link svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  display: block;
+  fill: currentColor;
+}
+.coward-social-link.soundcloud svg { width: 1.5rem; }
+
+@media (max-width: 700px) {
+  .about-head-grid { grid-template-columns: 1fr; }
+  .about-photo-deck,
+  .about-portrait { width: min(92vw, 29rem); justify-self: center; }
+  .about-photo-stage { aspect-ratio: 4 / 5; min-height: 0; }
+  .about-photo[src*="about-portrait-car"] { object-position: 39% 44%; }
+  .about-photo[src*="about-portrait-street"] { object-position: 58% 31%; }
+}
+
+
+</style>
+</head>
+<body>
+<script>
+/* Apply the route's header mode immediately, before the large embedded media parses. */
+(function () {
+  const route = window.location.hash.replace(/^#/, '') || 'home';
+  document.body.classList.toggle('route-home', route === 'home');
+  document.body.classList.toggle('route-project', route.startsWith('project-'));
+  document.body.classList.toggle('route-about', route === 'about');
+  document.body.classList.toggle('route-projects', route === 'projects');
+})();
+</script>
+
+<!-- ==========================================================
+     ARTIST / PORTFOLIO IDENTITY + WAVEFORM
+
+     The waveform is now PART OF this large white header rather than a
+     separate strip. It sits behind the text and disappears as this header
+     morphs into the compact navigation bar.
+     ========================================================== -->
+<section class="identity-intro" aria-label="Portfolio identity">
+  <canvas class="identity-wave" id="hero-wave" aria-hidden="true"></canvas>
+  <p class="identity-eyebrow">PORTFOLIO / 2026</p>  
+  <h1>NICHOLAS TAYLOR</h1>
+  <p class="identity-subtitle">PRODUCER / ARTIST</p>
+</section>
+
+<!-- ==========================================================
+     WAVEFORM ANIMATION CODE
+     This JavaScript creates the moving line. Its motion/math are unchanged.
+     The visual difference is that it now draws BLACK on the white identity
+     header instead of white on a separate black strip.
+     You do NOT need to edit this to rename text or change fonts.
+     ========================================================== -->
+<script>
+(function () {
+  const canvas = document.getElementById('hero-wave');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+  let start = performance.now();
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = Math.max(1, rect.width);
+    height = Math.max(1, rect.height);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function smoothstep(x) {
+    x = Math.max(0, Math.min(1, x));
+    return x * x * (3 - 2 * x);
+  }
+
+  function signal(x, time) {
+    /*
+       WAVE CHARACTER / SPEED
+       ----------------------
+       This intentionally is NOT a literal audio waveform. It layers several
+       faster oscillations and slowly warps their horizontal position so the
+       line feels musical, restless, and irregular while still retaining a
+       designed shape.
+
+       To make it calmer later: lower the time multipliers (2.45, 3.60, 5.10...).
+       To make it busier: raise the last two amplitudes (.10 and .065).
+    */
+    const warpedX = x
+      + Math.sin(x * 0.0065 - time * 1.10) * 16
+      + Math.sin(x * 0.0180 + time * 1.85) * 5;
+
+    const broad =
+      Math.sin(warpedX * 0.030 + time * 2.45) * 0.38 +
+      Math.sin(warpedX * 0.061 - time * 1.70 + 1.7) * 0.22 +
+      Math.sin(warpedX * 0.014 + time * 0.82 + 3.1) * 0.13;
+
+    const detail =
+      Math.sin(warpedX * 0.137 + time * 3.60) * 0.10 +
+      Math.sin(warpedX * 0.247 - time * 5.10 + 0.8) * 0.065;
+
+    // A moving local envelope makes some regions become more/less active.
+    const activity =
+      0.82 +
+      Math.sin(x * 0.008 - time * 1.25) * 0.12 +
+      Math.sin(x * 0.021 + time * 2.10) * 0.06;
+
+    return (broad + detail) * activity;
+  }
+
+  function draw(now) {
+    const elapsed = (now - start) / 1000;
+    const time = reduceMotion ? 2.2 : elapsed;
+    const intro = reduceMotion ? 0.72 : smoothstep(elapsed / 1.65);
+
+    ctx.clearRect(0, 0, width, height);
+
+    const centerY = height * 0.51;
+    // Faster amplitude movement adds a little more pulse without becoming chaotic.
+    const breathing =
+      0.86 +
+      Math.sin(time * 0.88) * 0.09 +
+      Math.sin(time * 2.30 + 0.7) * 0.05;
+    const amplitude = height * 0.17 * intro * breathing;
+
+    // faint center line: the "flat" signal the animation grows out of
+    ctx.beginPath();
+    ctx.moveTo(0, centerY);
+    ctx.lineTo(width, centerY);
+    ctx.strokeStyle = 'rgba(11,11,11,0.09)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // soft bloom behind the main signal
+    ctx.save();
+    ctx.shadowColor = 'rgba(11,11,11,0.20)';
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    for (let x = -2; x <= width + 2; x += 2) {
+      const edgeFade = Math.sin(Math.PI * Math.min(1, Math.max(0, x / width)));
+      const y = centerY + signal(x, time) * amplitude * (0.45 + edgeFade * 0.55);
+      if (x <= 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(11,11,11,0.18)';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.restore();
+
+    // crisp waveform
+    ctx.beginPath();
+    for (let x = -2; x <= width + 2; x += 1.5) {
+      const edgeFade = Math.sin(Math.PI * Math.min(1, Math.max(0, x / width)));
+      const y = centerY + signal(x, time) * amplitude * (0.45 + edgeFade * 0.55);
+      if (x <= 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(11,11,11,0.72)';
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+
+    if (!reduceMotion) requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+  requestAnimationFrame(draw);
+})();
+</script>
+
+<!-- ==========================================================
+     MAIN MENU
+     #home / #projects / #project-coward etc. are internal page
+     addresses. Keep those href values unless you also edit the
+     page-routing JavaScript near the bottom.
+     ========================================================== -->
+<nav class="site-nav" id="site-nav" aria-label="Primary navigation">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#home">NICHOLAS TAYLOR</a>
+
+    <!-- PRIMARY COMPACT NAVIGATION
+         These are intentionally the three strongest choices in the bar. -->
+    <div class="nav-links">
+      <a href="#home" data-nav-route="home">Home</a>
+
+      <div class="projects-nav-item" id="projects-nav-item">
+        <a class="projects-nav-link" href="#projects" data-nav-route="projects">All Projects</a>
+        <button
+          class="projects-nav-toggle"
+          id="projects-nav-toggle"
+          type="button"
+          aria-label="Show individual projects"
+          aria-expanded="false"
+          aria-controls="projects-nav-dropdown"
+        ></button>
+
+        <div class="projects-nav-dropdown" id="projects-nav-dropdown">
+          <a href="#project-fourth-ground">Fourth Ground</a>
+          <a href="#project-call-name">I'll Call On Your Name</a>
+          <a href="#project-coward">Coward Music Video</a>
+        </div>
+      </div>
+
+      <a href="#about" data-nav-route="about">About</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+(function () {
+  const item = document.getElementById('projects-nav-item');
+  const toggle = document.getElementById('projects-nav-toggle');
+  const projectsLink = item ? item.querySelector('.projects-nav-link') : null;
+  if (!item || !toggle || !projectsLink) return;
+
+  function setOpen(open) {
+    item.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  toggle.addEventListener('click', event => {
+    event.stopPropagation();
+    setOpen(!item.classList.contains('is-open'));
+  });
+
+  // Hover previews projects. Clicking the words themselves is navigation only.
+  // Suppress hover-open until the pointer actually leaves, so the dropdown does
+  // not remain visible on the All Projects page merely because the cursor is
+  // still sitting over the link after the route changes.
+  projectsLink.addEventListener('click', () => {
+    setOpen(false);
+    item.classList.add('suppress-hover');
+  });
+  item.addEventListener('mouseleave', () => item.classList.remove('suppress-hover'));
+
+  document.addEventListener('click', event => {
+    if (!item.contains(event.target)) setOpen(false);
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      setOpen(false);
+      toggle.blur();
+    }
+  });
+
+  window.addEventListener('hashchange', () => setOpen(false));
+})();
+</script>
+
+<!-- ==========================================================
+     SCROLL-MORPH BEHAVIOR — STABLE / NO-LAYOUT-JITTER VERSION
+
+     At the TOP of the site, the compact black menu is fully hidden.
+
+     The morph starts only when the LARGE white identity header reaches
+     the top of the browser. Over the next ~118px of scrolling it:
+       1. holds that large header at the top,
+       2. VISUALLY clips it down toward compact-menu height,
+       3. fades the white header toward black,
+       4. shrinks / fades the large ARTIST NAME, and
+       5. reveals the compact Home / All Projects / About bar near the end.
+
+     IMPORTANT TECHNICAL NOTE:
+     Older versions changed the header's actual height while scrolling.
+     That forced the browser to move the page layout on every frame and
+     could cause the glitch/jitter you noticed. This version NEVER changes
+     the real layout height while scrolling. It changes only clip-path,
+     opacity, and transforms, which are much more stable.
+
+     If you want the transformation to take MORE or LESS scrolling,
+     change MORPH_DISTANCE below. Larger = slower/longer morph.
+     ========================================================== -->
+<script>
+(function () {
+  const identity = document.querySelector('.identity-intro');
+  const nav = document.getElementById('site-nav');
+  if (!identity || !nav) return;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // EDIT THIS NUMBER if you want the collapse to take more/less scrolling.
+  const MORPH_DISTANCE = reduceMotion ? 1 : 118;
+
+  let ticking = false;
+  let morphStart = 0;
+  let expandedHeight = 0;
+  let compactHeight = 64;
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function smoothstep(value) {
+    const x = clamp(value, 0, 1);
+    return x * x * (3 - 2 * x);
+  }
+
+  function lerp(start, end, amount) {
+    return start + (end - start) * amount;
+  }
+
+  /*
+     Measure ONLY fixed geometry. We deliberately do not change the header's
+     height or padding here. getBoundingClientRect() still reports the full
+     layout box even when clip-path is visually hiding part of it.
+  */
+  function measureHeader() {
+    expandedHeight = identity.getBoundingClientRect().height;
+    compactHeight = nav.offsetHeight || 64;
+
+    // Stable document-space trigger: unaffected by the visual clipping below.
+    morphStart = identity.getBoundingClientRect().top + window.scrollY;
+  }
+
+  function updateHeaderMorph() {
+    const rawProgress = (window.scrollY - morphStart) / MORPH_DISTANCE;
+    const progress = smoothstep(clamp(rawProgress, 0, 1));
+
+    /*
+       LARGE HEADER -> SMALL BAR, WITHOUT CHANGING PAGE LAYOUT:
+       Clip away the lower portion of the identity header instead of changing
+       its actual CSS height. This is the main fix for the scrolling glitch.
+    */
+    const visibleHeight = lerp(expandedHeight, compactHeight, progress);
+    const clippedFromBottom = Math.max(0, expandedHeight - visibleHeight);
+    const clipValue = `inset(0px 0px ${clippedFromBottom.toFixed(2)}px 0px)`;
+    identity.style.clipPath = clipValue;
+    identity.style.webkitClipPath = clipValue;
+
+    // WHITE -> BLACK as the large identity area becomes the compact header.
+    identity.style.setProperty('--identity-dark-opacity', progress.toFixed(4));
+
+    // WAVEFORM: disappear with the large identity header.
+    // It fades a little faster than the name so no black signal remains
+    // visible once the compact black navigation takes over.
+    const waveOpacity = .72 * (1 - Math.min(1, progress * 1.18));
+    identity.style.setProperty('--identity-wave-opacity', waveOpacity.toFixed(4));
+
+    // LARGE NAME: compress/fade it as the header becomes the smaller bar.
+    identity.style.setProperty('--identity-name-scale', (1 - progress * .24).toFixed(4));
+    identity.style.setProperty('--identity-name-y', `${(-26 * progress).toFixed(2)}px`);
+    identity.style.setProperty('--identity-name-opacity', (1 - progress).toFixed(4));
+
+    // Supporting text disappears a little earlier than the main name.
+    identity.style.setProperty('--identity-copy-opacity', (1 - Math.min(1, progress * 1.35)).toFixed(4));
+    identity.style.setProperty('--identity-copy-y', `${(-12 * progress).toFixed(2)}px`);
+
+    // COMPACT MENU: appears only near the end of the morph.
+    const navProgress = clamp((progress - .68) / .32, 0, 1);
+    nav.style.opacity = navProgress.toFixed(4);
+    nav.style.transform = `translateY(${(-10 * (1 - navProgress)).toFixed(2)}px)`;
+    nav.classList.toggle('is-visible', navProgress > .01);
+
+    ticking = false;
+  }
+
+  function requestMorphUpdate() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(updateHeaderMorph);
+  }
+
+  function remeasure() {
+    measureHeader();
+    requestMorphUpdate();
+  }
+
+  measureHeader();
+  window.addEventListener('scroll', requestMorphUpdate, { passive: true });
+  window.addEventListener('resize', remeasure, { passive: true });
+  window.addEventListener('portfolio-route-change', remeasure);
+  requestMorphUpdate();
+})();
+</script>
+
+<main id="site-content">
+
+  <!-- ========================================================
+       HOME PAGE / PROJECT TREE
+       The tree is the main Home interface. Active leaves open projects,
+       blank leaves reserve space for future work, and the root opens About.
+       ======================================================== -->
+  <section class="site-page" data-page="home" id="page-home">
+    <!-- ======================================================
+         HOME = THE TREE
+
+         The tree is intentionally the main interface on this page.
+         There is no surrounding card, heading, legend, or side archive.
+         All Projects now lives only in the compact black navigation bar.
+         ====================================================== -->
+    <div class="home-tree-stage">
+      <svg class="home-roots" id="home-vines" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
+        <!-- Dense horizontal root/vine field. All geometry stays in this upper band. -->
+        <path class="home-vine-path earth bold" pathLength="1" data-vine-start="0.00" data-vine-drift="3.8" d="M-30 46 C42 8 84 94 153 51 C205 19 243 84 301 52 C359 20 401 91 463 47 C522 5 563 83 625 48 C686 13 729 85 787 49 C846 12 895 86 1030 42" />
+        <path class="home-vine-path soft" pathLength="1" data-vine-start="0.035" data-vine-drift="-5.2" d="M-40 82 C25 125 72 42 135 83 C190 119 224 54 275 82 C327 110 360 57 414 82 C472 109 499 43 552 71 C608 101 636 48 692 76 C750 105 779 54 839 80 C901 108 941 53 1035 88" />
+        <path class="home-vine-path fine earth" pathLength="1" data-vine-start="0.07" data-vine-drift="2.2" d="M-20 112 C42 75 88 150 146 112 C197 78 237 143 290 108 C339 77 384 143 437 107 C492 68 532 144 589 108 C642 74 689 144 741 109 C799 71 842 147 897 113 C943 84 976 111 1028 102" />
+        <path class="home-vine-path" pathLength="1" data-vine-start="0.105" data-vine-drift="-3.0" d="M-35 148 C28 102 77 193 138 145 C194 101 235 185 291 142 C348 98 390 188 450 143 C510 98 554 190 615 143 C676 97 720 191 780 145 C842 97 888 188 1030 139" />
+        <path class="home-vine-path soft earth" pathLength="1" data-vine-start="0.14" data-vine-drift="4.4" d="M1030 176 C965 219 916 131 854 177 C802 216 758 140 704 176 C648 214 606 136 548 175 C491 214 450 137 393 176 C336 216 295 137 237 177 C181 216 137 142 83 176 C37 205 3 187 -30 196" />
+        <path class="home-vine-path fine" pathLength="1" data-vine-start="0.18" data-vine-drift="-2.3" d="M-25 211 C39 177 79 245 136 211 C190 178 229 241 283 207 C339 172 378 246 435 210 C491 174 533 246 589 210 C646 173 687 247 744 211 C800 175 842 246 900 211 C951 180 986 212 1025 224" />
+        <path class="home-vine-path earth" pathLength="1" data-vine-start="0.215" data-vine-drift="3.2" d="M-35 250 C28 296 79 207 143 250 C200 288 242 215 299 250 C357 287 399 214 457 250 C517 288 559 213 618 251 C678 290 720 214 779 252 C839 291 883 217 940 250 C976 271 1005 257 1035 246" />
+        <path class="home-vine-path soft" pathLength="1" data-vine-start="0.255" data-vine-drift="-4.8" d="M-28 289 C40 250 82 330 145 287 C202 248 244 327 301 286 C360 244 403 331 462 287 C521 243 566 331 626 288 C687 244 729 331 789 289 C850 246 895 327 1032 281" />
+        <path class="home-vine-path fine earth" pathLength="1" data-vine-start="0.30" data-vine-drift="2.6" d="M-30 326 C31 292 73 354 130 323 C181 295 224 350 278 318 C332 286 374 350 429 318 C483 286 528 350 583 319 C640 286 681 350 738 319 C794 288 839 348 894 321 C945 296 982 321 1030 336" />
+
+        <!-- Irregular curls and loops woven between the long horizontal paths. -->
+        <path class="home-vine-path fine" pathLength="1" data-vine-start="0.055" data-vine-drift="5.5" d="M108 82 C74 48 85 15 120 12 C158 9 177 39 158 64 C139 88 106 70 110 47 C114 27 137 21 151 34" />
+        <path class="home-vine-path fine earth" pathLength="1" data-vine-start="0.11" data-vine-drift="-4.0" d="M351 143 C316 119 320 86 351 76 C384 66 411 87 405 114 C399 143 366 153 348 135 C330 117 345 96 366 99 C387 102 390 120 378 130" />
+        <path class="home-vine-path soft" pathLength="1" data-vine-start="0.165" data-vine-drift="3.6" d="M612 175 C580 145 586 111 619 102 C654 92 679 116 669 144 C660 170 627 177 611 157 C596 139 612 120 632 123 C652 126 653 144 641 153" />
+        <path class="home-vine-path fine earth" pathLength="1" data-vine-start="0.22" data-vine-drift="-5.6" d="M858 210 C827 183 831 151 862 142 C895 133 922 156 914 183 C907 210 876 219 858 201 C840 183 853 164 874 165 C895 167 900 184 887 195" />
+        <path class="home-vine-path fine" pathLength="1" data-vine-start="0.275" data-vine-drift="4.2" d="M221 286 C190 258 196 226 229 218 C263 210 288 235 278 262 C269 289 236 297 219 278 C203 260 219 241 240 244 C260 247 262 264 250 274" />
+        <path class="home-vine-path soft earth" pathLength="1" data-vine-start="0.325" data-vine-drift="-3.7" d="M704 319 C673 291 678 258 710 250 C745 241 770 266 760 294 C751 322 719 330 701 311 C685 293 700 274 721 277 C742 280 744 297 732 307" />
+      </svg>
+      <div class="project-graph-wrap">
+        <button class="tree-reset" id="tree-reset" type="button" aria-label="Return to the full project tree">← View full tree</button>
+        <svg class="project-graph project-tree-desktop" id="project-tree" data-project-tree="desktop" viewBox="0 0 800 520" role="img" aria-label="Project tree organized by medium" aria-describedby="project-graph-desc">
+                <desc id="project-graph-desc">A rooted tree grows upward from one bottom root. The main branching vertices represent project media. The Audio category has two project leaves, the Video category has one project leaf and one empty future leaf, and a third future-medium category has two empty leaves.</desc>
+
+                <!-- ==================================================
+                     TREE EDGES
+                     Branches are intentionally spread wider so each medium
+                     becomes a more distinct space when the camera focuses it.
+                     ================================================== -->
+
+                <!-- Root to blank trunk vertex -->
+                <path class="graph-edge" d="M400 460 L400 392" />
+
+                <!-- Blank trunk vertex splits into THREE medium categories -->
+                <path class="graph-edge future-edge" data-branch="future" d="M400 392 L100 310" />
+                <path class="graph-edge audio-edge" data-branch="audio" d="M400 392 L400 310" />
+                <path class="graph-edge video-edge" data-branch="video" d="M400 392 L700 310" />
+
+                <!-- FUTURE MEDIUM category → two future leaves -->
+                <path class="graph-edge future-edge" data-branch="future" d="M100 310 L35 225 M100 310 L170 220" />
+
+                <!-- AUDIO category → the two current audio projects -->
+                <path class="graph-edge audio-edge" data-branch="audio" d="M400 310 L330 220 M400 310 L470 220" />
+
+                <!-- VIDEO category → one future video leaf + Coward -->
+                <path class="graph-edge video-edge" data-branch="video" d="M700 310 L630 220 M700 310 L770 225" />
+
+                <!-- ==================================================
+                     ROOT / ABOUT NODE
+                     Degree = 1 and deliberately not a project leaf.
+                     Clicking the root opens the About page.
+                     ================================================== -->
+                <a class="graph-root-node" href="#about" aria-label="Open About page">
+                  <circle class="root-ring" cx="400" cy="460" r="7.5" />
+                  <circle class="root-core" cx="400" cy="460" r="2.6" />
+                  <text class="root-label" x="400" y="494" text-anchor="middle">ABOUT</text>
+                </a>
+
+                <!-- ==================================================
+                     BLANK TRUNK VERTEX
+                     This is the only unlabeled internal vertex before the
+                     tree branches into actual medium categories.
+                     ================================================== -->
+                <g class="graph-intermediate-node" aria-hidden="true">
+                  <circle cx="400" cy="392" r="4" />
+                </g>
+
+                <!-- ==================================================
+                     MEDIUM CATEGORY VERTICES
+                     These are labels / organizing nodes, not links.
+                     ================================================== -->
+
+                <!-- FUTURE / UNASSIGNED MEDIUM
+                     Rename this later to PHOTO, RENDERING, INTERACTIVE, etc. -->
+                <g class="graph-category-node future-category" data-branch="future" data-tree-focus="future" tabindex="0" role="button" aria-pressed="false" aria-label="Focus future medium branch">
+                  <circle class="category-ring" cx="100" cy="310" r="10.5" />
+                  <circle class="category-core" cx="100" cy="310" r="3.4" />
+                  <text class="category-label" x="100" y="286" text-anchor="middle">FUTURE MEDIUM</text>
+                </g>
+
+                <!-- AUDIO MEDIUM -->
+                <g class="graph-category-node audio-category" data-branch="audio" data-tree-focus="audio" tabindex="0" role="button" aria-pressed="false" aria-label="Focus Audio projects">
+                  <circle class="category-ring" cx="400" cy="310" r="10.5" />
+                  <circle class="category-core" cx="400" cy="310" r="3.4" />
+                  <text class="category-label" x="400" y="286" text-anchor="middle">AUDIO</text>
+                </g>
+
+                <!-- VIDEO MEDIUM -->
+                <g class="graph-category-node video-category" data-branch="video" data-tree-focus="video" tabindex="0" role="button" aria-pressed="false" aria-label="Focus Video projects">
+                  <circle class="category-ring" cx="700" cy="310" r="10.5" />
+                  <circle class="category-core" cx="700" cy="310" r="3.4" />
+                  <text class="category-label" x="700" y="286" text-anchor="middle">VIDEO</text>
+                </g>
+
+                <!-- ==================================================
+                     TERMINAL LEAVES
+                     Only degree-1 leaves can hold individual projects.
+                     ================================================== -->
+
+                <!-- FUTURE MEDIUM → EMPTY LEAF 1 -->
+                <g class="graph-empty-node future-empty" data-branch="future" aria-hidden="true">
+                  <circle cx="35" cy="225" r="3.4" />
+                </g>
+
+                <!-- FUTURE MEDIUM → EMPTY LEAF 2 -->
+                <g class="graph-empty-node future-empty" data-branch="future" aria-hidden="true">
+                  <circle cx="170" cy="220" r="3.4" />
+                </g>
+
+                <!-- AUDIO → FOURTH GROUND -->
+                <a class="graph-project-node audio-project" data-branch="audio" href="#project-fourth-ground" aria-label="Open Fourth Ground audio project">
+                  <circle class="node-ring" cx="330" cy="220" r="5.3" />
+                  <circle class="node-core" cx="330" cy="220" r="2" />
+                  <text class="node-label" x="330" y="191" text-anchor="middle">Fourth Ground</text>
+                  <text class="node-type" x="330" y="203" text-anchor="middle">AUDIO · 2026</text>
+                </a>
+
+                <!-- AUDIO → I'LL CALL ON YOUR NAME -->
+                <a class="graph-project-node audio-project" data-branch="audio" href="#project-call-name" aria-label="Open I'll Call On Your Name audio project">
+                  <circle class="node-ring" cx="470" cy="220" r="5.3" />
+                  <circle class="node-core" cx="470" cy="220" r="2" />
+                  <text class="node-label" x="470" y="191" text-anchor="middle">I'll Call On</text>
+                  <text class="node-label" x="470" y="203" text-anchor="middle">Your Name</text>
+                  <text class="node-type" x="470" y="215" text-anchor="middle">AUDIO · 2026</text>
+                </a>
+
+                <!-- VIDEO → EMPTY FUTURE VIDEO LEAF -->
+                <g class="graph-empty-node video-empty" data-branch="video" aria-hidden="true">
+                  <circle cx="630" cy="220" r="3.4" />
+                </g>
+
+                <!-- VIDEO → COWARD MUSIC VIDEO -->
+                <a class="graph-project-node video-project" data-branch="video" href="#project-coward" aria-label="Open Coward Music Video project">
+                  <circle class="node-ring" cx="770" cy="225" r="5.3" />
+                  <circle class="node-core" cx="770" cy="225" r="2" />
+                  <text class="node-label" x="754" y="196" text-anchor="end">Coward</text>
+                  <text class="node-label" x="754" y="209" text-anchor="end">Music Video</text>
+                  <text class="node-type" x="754" y="221" text-anchor="end">VIDEO · 2024</text>
+                </a>
+              </svg>
+
+              <!-- ==================================================
+                   PHONE / PORTRAIT TREE
+                   Same project structure, recomposed for a tall screen so
+                   the nodes remain prominent instead of shrinking the
+                   desktop diagram to fit a narrow viewport.
+                   ================================================== -->
+              <svg class="project-graph project-tree-mobile" id="project-tree-mobile" data-project-tree="mobile" viewBox="0 0 390 680" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Project tree organized by medium for a phone screen">
+                <!-- Root / trunk -->
+                <path class="graph-edge mobile-trunk" d="M195 620 L195 550" />
+
+                <!-- Trunk to media categories -->
+                <path class="graph-edge future-edge" data-branch="future" d="M195 550 C168 510 112 466 60 430" />
+                <path class="graph-edge audio-edge" data-branch="audio" d="M195 550 L195 430" />
+                <path class="graph-edge video-edge" data-branch="video" d="M195 550 C222 510 278 466 330 430" />
+
+                <!-- Category to leaves: deliberately compact for portrait -->
+                <path class="graph-edge future-edge" data-branch="future" d="M60 430 L28 315 M60 430 L96 310" />
+                <path class="graph-edge audio-edge" data-branch="audio" d="M195 430 L150 305 M195 430 L240 305" />
+                <path class="graph-edge video-edge" data-branch="video" d="M330 430 L292 310 M330 430 L365 315" />
+
+                <a class="graph-root-node" href="#about" aria-label="Open About page">
+                  <circle class="root-ring" cx="195" cy="620" r="10" />
+                  <circle class="root-core" cx="195" cy="620" r="3.3" />
+                  <text class="root-label" x="195" y="653" text-anchor="middle">ABOUT</text>
+                </a>
+
+                <g class="graph-intermediate-node" aria-hidden="true">
+                  <circle cx="195" cy="550" r="5" />
+                </g>
+
+                <g class="graph-category-node future-category" data-branch="future" data-tree-focus="future" tabindex="0" role="button" aria-pressed="false" aria-label="Focus future medium branch">
+                  <circle class="category-ring" cx="60" cy="430" r="15" />
+                  <circle class="category-core" cx="60" cy="430" r="4.8" />
+                  <text class="category-label" x="60" y="398" text-anchor="middle">FUTURE</text>
+                </g>
+
+                <g class="graph-category-node audio-category" data-branch="audio" data-tree-focus="audio" tabindex="0" role="button" aria-pressed="false" aria-label="Focus Audio projects">
+                  <circle class="category-ring" cx="195" cy="430" r="15" />
+                  <circle class="category-core" cx="195" cy="430" r="4.8" />
+                  <text class="category-label" x="195" y="398" text-anchor="middle">AUDIO</text>
+                </g>
+
+                <g class="graph-category-node video-category" data-branch="video" data-tree-focus="video" tabindex="0" role="button" aria-pressed="false" aria-label="Focus Video projects">
+                  <circle class="category-ring" cx="330" cy="430" r="15" />
+                  <circle class="category-core" cx="330" cy="430" r="4.8" />
+                  <text class="category-label" x="330" y="398" text-anchor="middle">VIDEO</text>
+                </g>
+
+                <g class="graph-empty-node future-empty" data-branch="future" aria-hidden="true">
+                  <circle cx="28" cy="315" r="6" />
+                </g>
+                <g class="graph-empty-node future-empty" data-branch="future" aria-hidden="true">
+                  <circle cx="96" cy="310" r="6" />
+                </g>
+
+                <a class="graph-project-node audio-project" data-branch="audio" href="#project-fourth-ground" aria-label="Open Fourth Ground audio project">
+                  <circle class="node-ring" cx="150" cy="305" r="8.5" />
+                  <circle class="node-core" cx="150" cy="305" r="3" />
+                  <text class="node-label" x="150" y="263" text-anchor="middle">Fourth Ground</text>
+                  <text class="node-type" x="150" y="279" text-anchor="middle">AUDIO · 2026</text>
+                </a>
+
+                <a class="graph-project-node audio-project" data-branch="audio" href="#project-call-name" aria-label="Open I'll Call On Your Name audio project">
+                  <circle class="node-ring" cx="240" cy="305" r="8.5" />
+                  <circle class="node-core" cx="240" cy="305" r="3" />
+                  <text class="node-label" x="240" y="250" text-anchor="middle">I'll Call On</text>
+                  <text class="node-label" x="240" y="264" text-anchor="middle">Your Name</text>
+                  <text class="node-type" x="240" y="280" text-anchor="middle">AUDIO · 2026</text>
+                </a>
+
+                <g class="graph-empty-node video-empty" data-branch="video" aria-hidden="true">
+                  <circle cx="292" cy="310" r="6" />
+                </g>
+
+                <a class="graph-project-node video-project" data-branch="video" href="#project-coward" aria-label="Open Coward Music Video project">
+                  <circle class="node-ring" cx="365" cy="315" r="8.5" />
+                  <circle class="node-core" cx="365" cy="315" r="3" />
+                  <text class="node-label" x="354" y="270" text-anchor="end">Coward</text>
+                  <text class="node-label" x="354" y="284" text-anchor="end">Music Video</text>
+                  <text class="node-type" x="354" y="300" text-anchor="end">VIDEO · 2024</text>
+                </a>
+              </svg>
+
+        <!-- Dedicated focused-branch stage. It is hidden during the full tree
+             and becomes a fixed, non-scrollable composition after a category
+             is selected. -->
+        <div class="branch-focus-shell" id="branch-focus-shell" aria-hidden="true">
+          <svg class="branch-focus-svg branch-focus-desktop" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Focused project medium">
+
+            <!-- AUDIO: two active project leaves -->
+            <g class="branch-focus-group audio-focus" data-focus-stage="audio">
+              <path class="focus-branch-line" d="M438 430 C420 355 388 250 355 173" />
+              <path class="focus-branch-line" d="M562 430 C580 355 612 250 645 173" />
+
+              <a class="focus-project" href="#project-fourth-ground" aria-label="Open Fourth Ground audio project">
+                <text class="focus-project-title" x="355" y="101" text-anchor="middle">Fourth Ground</text>
+                <text class="focus-project-meta" x="355" y="124" text-anchor="middle">AUDIO · 2026</text>
+                <circle class="focus-node-ring" cx="355" cy="154" r="18" />
+                <circle class="focus-node-core" cx="355" cy="154" r="6.5" />
+              </a>
+
+              <a class="focus-project" href="#project-call-name" aria-label="Open I'll Call On Your Name audio project">
+                <text class="focus-project-title" x="645" y="101" text-anchor="middle">I'll Call On Your Name</text>
+                <text class="focus-project-meta" x="645" y="124" text-anchor="middle">AUDIO · 2026</text>
+                <circle class="focus-node-ring" cx="645" cy="154" r="18" />
+                <circle class="focus-node-core" cx="645" cy="154" r="6.5" />
+              </a>
+
+              <text class="focus-parent-label" x="500" y="358" text-anchor="middle">AUDIO</text>
+              <text class="focus-parent-hint" x="500" y="382" text-anchor="middle">SELECT A LEAF · ESC TO RETURN</text>
+              <circle class="focus-parent-ring" cx="500" cy="600" r="205" />
+              <circle class="focus-parent-core" cx="500" cy="574" r="16" />
+            </g>
+
+            <!-- VIDEO: one current project + one open leaf -->
+            <g class="branch-focus-group video-focus" data-focus-stage="video">
+              <path class="focus-branch-line" d="M438 430 C420 355 388 250 355 173" />
+              <path class="focus-branch-line" d="M562 430 C580 355 612 250 645 173" />
+
+              <g aria-hidden="true">
+                <circle class="focus-empty-ring" cx="355" cy="154" r="12" />
+              </g>
+
+              <a class="focus-project" href="#project-coward" aria-label="Open Coward Music Video project">
+                <text class="focus-project-title" x="645" y="101" text-anchor="middle">Coward Music Video</text>
+                <text class="focus-project-meta" x="645" y="124" text-anchor="middle">VIDEO · 2024</text>
+                <circle class="focus-node-ring" cx="645" cy="154" r="18" />
+                <circle class="focus-node-core" cx="645" cy="154" r="6.5" />
+              </a>
+
+              <text class="focus-parent-label" x="500" y="358" text-anchor="middle">VIDEO</text>
+              <text class="focus-parent-hint" x="500" y="382" text-anchor="middle">SELECT A LEAF · ESC TO RETURN</text>
+              <circle class="focus-parent-ring" cx="500" cy="600" r="205" />
+              <circle class="focus-parent-core" cx="500" cy="574" r="16" />
+            </g>
+
+            <!-- FUTURE: open growth slots -->
+            <g class="branch-focus-group future-focus" data-focus-stage="future">
+              <path class="focus-branch-line" d="M438 430 C420 355 388 250 355 173" />
+              <path class="focus-branch-line" d="M562 430 C580 355 612 250 645 173" />
+              <circle class="focus-empty-ring" cx="355" cy="154" r="12" />
+              <circle class="focus-empty-ring" cx="645" cy="154" r="12" />
+              <text class="focus-project-meta" x="355" y="116" text-anchor="middle">OPEN LEAF</text>
+              <text class="focus-project-meta" x="645" y="116" text-anchor="middle">OPEN LEAF</text>
+              <text class="focus-parent-label" x="500" y="358" text-anchor="middle">FUTURE MEDIUM</text>
+              <text class="focus-parent-hint" x="500" y="382" text-anchor="middle">SPACE FOR THE TREE TO GROW</text>
+              <circle class="focus-parent-ring" cx="500" cy="600" r="205" />
+              <circle class="focus-parent-core" cx="500" cy="574" r="16" />
+            </g>
+          </svg>
+
+          <!-- PHONE / PORTRAIT FOCUS COMPOSITION -->
+          <svg class="branch-focus-svg branch-focus-mobile" viewBox="0 0 390 700" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Focused project medium for a phone screen">
+            <g class="branch-focus-group audio-focus" data-focus-stage="audio">
+              <path class="focus-branch-line" d="M158 520 C150 425 132 300 116 218" />
+              <path class="focus-branch-line" d="M232 520 C240 425 258 300 274 218" />
+
+              <a class="focus-project" href="#project-fourth-ground" aria-label="Open Fourth Ground audio project">
+                <text class="focus-project-title" x="116" y="139" text-anchor="middle">Fourth Ground</text>
+                <text class="focus-project-meta" x="116" y="161" text-anchor="middle">AUDIO · 2026</text>
+                <circle class="focus-node-ring" cx="116" cy="194" r="17" />
+                <circle class="focus-node-core" cx="116" cy="194" r="6" />
+              </a>
+
+              <a class="focus-project" href="#project-call-name" aria-label="Open I'll Call On Your Name audio project">
+                <text class="focus-project-title" x="274" y="126" text-anchor="middle">I'll Call On</text>
+                <text class="focus-project-title" x="274" y="146" text-anchor="middle">Your Name</text>
+                <text class="focus-project-meta" x="274" y="166" text-anchor="middle">AUDIO · 2026</text>
+                <circle class="focus-node-ring" cx="274" cy="194" r="17" />
+                <circle class="focus-node-core" cx="274" cy="194" r="6" />
+              </a>
+
+              <text class="focus-parent-label" x="195" y="438" text-anchor="middle">AUDIO</text>
+              <text class="focus-parent-hint" x="195" y="462" text-anchor="middle">SELECT A LEAF · ESC TO RETURN</text>
+              <circle class="focus-parent-ring" cx="195" cy="780" r="270" />
+              <circle class="focus-parent-core" cx="195" cy="646" r="15" />
+            </g>
+
+            <g class="branch-focus-group video-focus" data-focus-stage="video">
+              <path class="focus-branch-line" d="M158 520 C150 425 132 300 116 218" />
+              <path class="focus-branch-line" d="M232 520 C240 425 258 300 274 218" />
+
+              <g aria-hidden="true">
+                <circle class="focus-empty-ring" cx="116" cy="194" r="11" />
+              </g>
+
+              <a class="focus-project" href="#project-coward" aria-label="Open Coward Music Video project">
+                <text class="focus-project-title" x="274" y="139" text-anchor="middle">Coward Music Video</text>
+                <text class="focus-project-meta" x="274" y="161" text-anchor="middle">VIDEO · 2024</text>
+                <circle class="focus-node-ring" cx="274" cy="194" r="17" />
+                <circle class="focus-node-core" cx="274" cy="194" r="6" />
+              </a>
+
+              <text class="focus-parent-label" x="195" y="438" text-anchor="middle">VIDEO</text>
+              <text class="focus-parent-hint" x="195" y="462" text-anchor="middle">SELECT A LEAF · ESC TO RETURN</text>
+              <circle class="focus-parent-ring" cx="195" cy="780" r="270" />
+              <circle class="focus-parent-core" cx="195" cy="646" r="15" />
+            </g>
+
+            <g class="branch-focus-group future-focus" data-focus-stage="future">
+              <path class="focus-branch-line" d="M158 520 C150 425 132 300 116 218" />
+              <path class="focus-branch-line" d="M232 520 C240 425 258 300 274 218" />
+              <circle class="focus-empty-ring" cx="116" cy="194" r="11" />
+              <circle class="focus-empty-ring" cx="274" cy="194" r="11" />
+              <text class="focus-project-meta" x="116" y="153" text-anchor="middle">OPEN LEAF</text>
+              <text class="focus-project-meta" x="274" y="153" text-anchor="middle">OPEN LEAF</text>
+              <text class="focus-parent-label" x="195" y="438" text-anchor="middle">FUTURE</text>
+              <text class="focus-parent-hint" x="195" y="462" text-anchor="middle">SPACE FOR THE TREE TO GROW</text>
+              <circle class="focus-parent-ring" cx="195" cy="780" r="270" />
+              <circle class="focus-parent-core" cx="195" cy="646" r="15" />
+            </g>
+          </svg>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       HOME TREE CATEGORY FOCUS / ONE-CONTINUOUS-MOVE VERSION
+
+       Selecting a medium no longer performs a hidden SVG camera zoom and
+       THEN opens the focus scene. The dedicated scene expands directly from
+       the selected category in one uninterrupted transition.
+       ========================================================== -->
+  <script>
+  (function () {
+    const trees = Array.from(document.querySelectorAll('[data-project-tree]'));
+    const resetButton = document.getElementById('tree-reset');
+    const focusShell = document.getElementById('branch-focus-shell');
+    if (!trees.length || !resetButton || !focusShell) return;
+
+    const categoryNodes = Array.from(document.querySelectorAll('[data-project-tree] [data-tree-focus]'));
+    const branchItems = Array.from(document.querySelectorAll('[data-project-tree] [data-branch]'));
+    const focusGroups = Array.from(focusShell.querySelectorAll('[data-focus-stage]'));
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let activeFocus = null;
+    let lockedScrollY = 0;
+    let resetTimer = 0;
+
+    function lockTreeScroll() {
+      if (document.documentElement.classList.contains('tree-focus-lock')) return;
+      lockedScrollY = window.scrollY;
+      document.documentElement.classList.add('tree-focus-lock');
+    }
+    function unlockTreeScroll() {
+      document.documentElement.classList.remove('tree-focus-lock');
+      window.scrollTo(0, lockedScrollY);
+    }
+
+    function markBranch(name) {
+      categoryNodes.forEach(node => {
+        const selected = node.dataset.treeFocus === name;
+        node.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+      branchItems.forEach(item => {
+        const selected = item.dataset.branch === name;
+        item.classList.toggle('is-focus-branch', selected);
+        item.classList.toggle('is-muted-branch', Boolean(name) && !selected);
+      });
+      resetButton.classList.toggle('is-visible', Boolean(name));
+    }
+
+    function setExpansionOrigin(node) {
+      const rect = node.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      focusShell.style.setProperty('--focus-origin-x', `${x.toFixed(1)}px`);
+      focusShell.style.setProperty('--focus-origin-y', `${y.toFixed(1)}px`);
+    }
+
+    function focusCategory(name, node) {
+      if (activeFocus === name) { resetTree(); return; }
+      window.clearTimeout(resetTimer);
+      activeFocus = name;
+      setExpansionOrigin(node);
+      lockTreeScroll();
+      markBranch(name);
+      focusGroups.forEach(group => group.classList.toggle('is-active', group.dataset.focusStage === name));
+      focusShell.setAttribute('aria-hidden', 'false');
+      // One rAF lets the scene establish its collapsed origin before the single transition.
+      requestAnimationFrame(() => focusShell.classList.add('is-visible'));
+    }
+
+    function resetTree() {
+      if (!activeFocus) return;
+      activeFocus = null;
+      focusShell.classList.remove('is-visible');
+      focusShell.setAttribute('aria-hidden', 'true');
+      resetTimer = window.setTimeout(() => {
+        focusGroups.forEach(group => group.classList.remove('is-active'));
+        markBranch(null);
+        unlockTreeScroll();
+      }, reduceMotion ? 0 : 760);
+    }
+
+    categoryNodes.forEach(node => {
+      node.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        focusCategory(node.dataset.treeFocus, node);
+      });
+      node.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          focusCategory(node.dataset.treeFocus, node);
+        }
+      });
+    });
+
+    resetButton.addEventListener('click', resetTree);
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && activeFocus) resetTree();
+    });
+
+    window.addEventListener('hashchange', () => {
+      const route = window.location.hash.replace(/^#/, '') || 'home';
+      if (route !== 'home' && activeFocus) {
+        activeFocus = null;
+        focusShell.classList.remove('is-visible');
+        focusShell.setAttribute('aria-hidden', 'true');
+        focusGroups.forEach(group => group.classList.remove('is-active'));
+        markBranch(null);
+        unlockTreeScroll();
+      }
+    });
+  })();
+  </script>
+
+  <!-- ========================================================
+       ALL PROJECTS / ARCHIVE TREE
+       This is the readable archive counterpart to the exploratory Home tree.
+       ======================================================== -->
+  <section class="site-page" data-page="projects" id="page-projects" hidden>
+    <p class="page-kicker">Archive / branching index</p>
+    <h2 class="page-title">All projects.</h2>
+    <p class="projects-archive-intro">The same tree, flattened into an archive: each medium forms a branch, and each project is one of its leaves.</p>
+
+    <div class="archive-tree" aria-label="Project archive organized by medium">
+      <section class="archive-medium audio" aria-labelledby="archive-audio-title">
+        <div class="archive-parent" aria-hidden="true"><span class="archive-parent-node"></span></div>
+        <div class="archive-branch">
+          <header class="archive-medium-head">
+            <h3 id="archive-audio-title">Audio</h3>
+            <span class="archive-medium-count">02 leaves</span>
+          </header>
+          <div class="archive-leaves">
+            <a class="archive-leaf" href="#project-fourth-ground">
+              <span class="archive-leaf-title">Fourth Ground</span>
+              <span class="archive-leaf-meta">2026 · audio</span>
+            </a>
+            <a class="archive-leaf" href="#project-call-name">
+              <span class="archive-leaf-title">I'll Call On Your Name</span>
+              <span class="archive-leaf-meta">2026 · audio</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="archive-medium video" aria-labelledby="archive-video-title">
+        <div class="archive-parent" aria-hidden="true"><span class="archive-parent-node"></span></div>
+        <div class="archive-branch">
+          <header class="archive-medium-head">
+            <h3 id="archive-video-title">Video</h3>
+            <span class="archive-medium-count">01 leaf</span>
+          </header>
+          <div class="archive-leaves">
+            <a class="archive-leaf" href="#project-coward">
+              <span class="archive-leaf-title">Coward Music Video</span>
+              <span class="archive-leaf-meta">2024 · video</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="archive-medium growth" aria-labelledby="archive-growth-title">
+        <div class="archive-parent" aria-hidden="true"><span class="archive-parent-node"></span></div>
+        <div class="archive-branch">
+          <header class="archive-medium-head">
+            <h3 id="archive-growth-title">Future growth</h3>
+            <span class="archive-medium-count">open branch</span>
+          </header>
+          <p class="archive-growth-note">Reserved for the next medium the portfolio grows into. This branch can become photography, rendering, interactive work, or something else later.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       PROJECT PAGE: FOURTH GROUND
+       Edit title, metadata, caption, description, and the alternate
+       description here. Do NOT rename the audio id unless you also
+       change the media setup JavaScript at the very bottom.
+       ======================================================== -->
+  <section class="site-page" data-page="project-fourth-ground" id="page-project-fourth-ground" hidden>
+    <div class="project-sparkles" aria-hidden="true">
+      <i style="--sx:8%;--sy:7%;--sd:0s;--ss:.72"></i>
+      <i style="--sx:83%;--sy:13%;--sd:1.8s;--ss:.48"></i>
+      <i style="--sx:93%;--sy:31%;--sd:3.2s;--ss:.62"></i>
+      <i style="--sx:14%;--sy:39%;--sd:4.6s;--ss:.42"></i>
+      <i style="--sx:72%;--sy:51%;--sd:2.5s;--ss:.54"></i>
+      <i style="--sx:28%;--sy:64%;--sd:6.1s;--ss:.66"></i>
+      <i style="--sx:88%;--sy:74%;--sd:7.3s;--ss:.38"></i>
+      <i style="--sx:10%;--sy:86%;--sd:5.2s;--ss:.5"></i>
+      <i style="--sx:62%;--sy:94%;--sd:8.1s;--ss:.58"></i>
+    </div>
+    <a class="back-link" href="#projects">← All projects</a>
+    <header class="project-detail-head">
+      <canvas class="project-title-wave" aria-hidden="true"></canvas>
+      <p class="page-kicker">Project / Audio</p>
+      <h2>Fourth Ground</h2>
+      <p class="meta">2026 · independent · Nicholas Taylor</p>
+    </header>
+
+    <figure class="project-media">
+      <audio id="arcane-audio" src="./media/taylor_arcane_01.wav" controls preload="metadata" aria-label="Fourth Ground audio player"></audio>
+      <div class="media-status" id="arcane-status"></div>
+      <figcaption>deep dark synth, layered texture, and a spacey feeling</figcaption>
+    </figure>
+
+    <div class="project-copy">
+      <h3>Description</h3>
+      <p>
+        This was the final project we made for MAT 111MC, which for me was a deep, dark production. All the sounds come from
+        Ryan's sound library (klotho) that he made. Then, using Google Colab, we used those sounds and coded arrangements of
+        those sounds, and did some mixing in the Colab Notebook itself. I used a synth that Ryan provided outside of the sound
+        library, and with that, created the dark, low, spacey drone. Then I grabbed the sounds that I arranged in the Colab
+        Notebook as samples, and then made the full piece in FL Studio. It is fully produced, engineered, mixed, and mastered
+        by me. I took inspiration from other producers like Popilization, ssongbirdssing, orchead420, and it's a style of
+        production I have never explored before, which is why I wanted to make it.
+      </p>
+    </div>
+
+  
+
+    <section class="project-process single-process" aria-label="Fourth Ground process gallery">
+      <svg class="project-process-roots" viewBox="0 0 1000 980" preserveAspectRatio="none" aria-hidden="true">
+        <path class="project-root-path main" pathLength="1" d="M505 0 C498 120 530 205 500 315 C470 430 515 515 490 630 C468 742 490 842 455 980" />
+        <path class="project-root-path branch" pathLength="1" d="M500 260 C410 315 335 350 245 430 C185 482 125 530 60 565" />
+        <path class="project-root-path branch soft" pathLength="1" d="M493 470 C590 515 680 575 760 655 C820 715 885 760 950 790" />
+        <path class="project-root-path branch soft" pathLength="1" d="M485 690 C400 745 320 810 230 900 C185 945 125 970 72 980" />
+      </svg>
+      <header class="project-process-head project-process-reveal">
+        <p class="page-kicker">Process / below the surface</p>
+        <h3>How it grew.</h3>
+        <p>Images from the making of the project. The root system develops as you move farther into the process.</p>
+      </header>
+      <div class="process-gallery single-process">
+        <figure class="process-photo project-process-reveal" style="--photo-tilt:-1.4deg">
+          <img src="./media/fourth-ground-process-01.jpg" alt="FL Studio arrangement used while producing Fourth Ground" loading="lazy">
+          <figcaption>Fourth Ground / process 01</figcaption>
+        </figure>
+      </div>
+    </section>
+  </section>
+
+  <!-- ========================================================
+       PROJECT PAGE: I'LL CALL ON YOUR NAME
+       ======================================================== -->
+  <section class="site-page" data-page="project-call-name" id="page-project-call-name" hidden>
+    <div class="project-sparkles" aria-hidden="true">
+      <i style="--sx:8%;--sy:7%;--sd:0s;--ss:.72"></i>
+      <i style="--sx:83%;--sy:13%;--sd:1.8s;--ss:.48"></i>
+      <i style="--sx:93%;--sy:31%;--sd:3.2s;--ss:.62"></i>
+      <i style="--sx:14%;--sy:39%;--sd:4.6s;--ss:.42"></i>
+      <i style="--sx:72%;--sy:51%;--sd:2.5s;--ss:.54"></i>
+      <i style="--sx:28%;--sy:64%;--sd:6.1s;--ss:.66"></i>
+      <i style="--sx:88%;--sy:74%;--sd:7.3s;--ss:.38"></i>
+      <i style="--sx:10%;--sy:86%;--sd:5.2s;--ss:.5"></i>
+      <i style="--sx:62%;--sy:94%;--sd:8.1s;--ss:.58"></i>
+    </div>
+    <a class="back-link" href="#projects">← All projects</a>
+    <header class="project-detail-head">
+      <canvas class="project-title-wave" aria-hidden="true"></canvas>
+      <p class="page-kicker">Project / Audio</p>
+      <h2>I'll Call On Your Name</h2>
+      <p class="meta">2026 · independent · Nicholas Taylor</p>
+    </header>
+
+    <figure class="project-media">
+      <audio id="blip-audio" src="./media/taylor_blip_01.mp3" controls preload="metadata" aria-label="I'll Call On Your Name audio player"></audio>
+      <div class="media-status" id="blip-status"></div>
+      <figcaption>Blips, texture, melody, and flips</figcaption>
+    </figure>
+
+    <div class="project-copy">
+      <h3>Description</h3>
+      <p>
+        This track is a purely instrumental track that I made in FL studio, arranged, engineered, mixed, and mastered by me.
+        The main melody is a instrumental guitar from the song "and the rest..." by yoshi douglas, where it is reversed,
+        different filters, which makes the original sample unrecognizable. This is my first fully produced song with a
+        sampled element that persists through the song, and where I sample other movie vocals. The old TV sound effects that
+        are scattered throughout give this beat a blippy, retro atmosphere.
+      </p>
+    </div>
+
+  
+
+    <section class="project-process single-process" aria-label="I'll Call On Your Name process gallery">
+      <svg class="project-process-roots" viewBox="0 0 1000 980" preserveAspectRatio="none" aria-hidden="true">
+        <path class="project-root-path main" pathLength="1" d="M505 0 C498 120 530 205 500 315 C470 430 515 515 490 630 C468 742 490 842 455 980" />
+        <path class="project-root-path branch" pathLength="1" d="M500 260 C410 315 335 350 245 430 C185 482 125 530 60 565" />
+        <path class="project-root-path branch soft" pathLength="1" d="M493 470 C590 515 680 575 760 655 C820 715 885 760 950 790" />
+        <path class="project-root-path branch soft" pathLength="1" d="M485 690 C400 745 320 810 230 900 C185 945 125 970 72 980" />
+      </svg>
+      <header class="project-process-head project-process-reveal">
+        <p class="page-kicker">Process / below the surface</p>
+        <h3>How it grew.</h3>
+        <p>Images from the making of the project. The root system develops as you move farther into the process.</p>
+      </header>
+      <div class="process-gallery single-process">
+        <figure class="process-photo project-process-reveal" style="--photo-tilt:-1.4deg">
+          <img src="./media/ill-call-on-your-name-process-01.jpg" alt="FL Studio arrangement used while producing I'll Call On Your Name" loading="lazy">
+          <figcaption>I'll Call On Your Name / process 01</figcaption>
+        </figure>
+      </div>
+    </section>
+  </section>
+
+  <!-- ========================================================
+       PROJECT PAGE: COWARD MUSIC VIDEO
+       ======================================================== -->
+  <section class="site-page" data-page="project-coward" id="page-project-coward" hidden>
+    <div class="project-sparkles" aria-hidden="true">
+      <i style="--sx:8%;--sy:7%;--sd:0s;--ss:.72"></i>
+      <i style="--sx:83%;--sy:13%;--sd:1.8s;--ss:.48"></i>
+      <i style="--sx:93%;--sy:31%;--sd:3.2s;--ss:.62"></i>
+      <i style="--sx:14%;--sy:39%;--sd:4.6s;--ss:.42"></i>
+      <i style="--sx:72%;--sy:51%;--sd:2.5s;--ss:.54"></i>
+      <i style="--sx:28%;--sy:64%;--sd:6.1s;--ss:.66"></i>
+      <i style="--sx:88%;--sy:74%;--sd:7.3s;--ss:.38"></i>
+      <i style="--sx:10%;--sy:86%;--sd:5.2s;--ss:.5"></i>
+      <i style="--sx:62%;--sy:94%;--sd:8.1s;--ss:.58"></i>
+    </div>
+    <a class="back-link" href="#projects">← All projects</a>
+    <header class="project-detail-head">
+      <canvas class="project-title-wave" aria-hidden="true"></canvas>
+      <p class="page-kicker">Project / Video</p>
+      <h2>Coward Music Video</h2>
+      <p class="meta">2024 · independent · Nicholas Taylor</p>
+    </header>
+
+    <figure class="project-media">
+      <video id="coward-video" src="./media/taylor_coward_02.mov" controls preload="metadata" playsinline aria-label="Coward music video"></video>
+      <div class="media-status" id="coward-status"></div>
+      <figcaption>Full music video, shot at UCSB and Isla Vista</figcaption>
+      <div class="coward-social-links" aria-label="Coward online links">
+        <a class="coward-social-link youtube" href="https://www.youtube.com/watch?v=g5lF71afsDk" target="_blank" rel="noopener noreferrer" aria-label="Watch Coward on YouTube" title="YouTube">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.2 6.2a3 3 0 0 0-2.1-2.1C19.2 3.6 12 3.6 12 3.6s-7.2 0-9.1.5A3 3 0 0 0 .8 6.2C.3 8.1.3 12 .3 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.1.5 9.1.5s7.2 0 9.1-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"/></svg>
+        </a>
+        <a class="coward-social-link soundcloud" href="https://soundcloud.com/foreground0/coward-diaryentrynumber3" target="_blank" rel="noopener noreferrer" aria-label="Listen to Coward on SoundCloud" title="SoundCloud">
+          <svg viewBox="0 0 28 18" aria-hidden="true"><path d="M1.2 10.8c-.6 0-1.1.5-1.1 1.1v1.5c0 .6.5 1.1 1.1 1.1s1.1-.5 1.1-1.1v-1.5c0-.6-.5-1.1-1.1-1.1Zm3-2.2c-.7 0-1.2.5-1.2 1.2v4.6c0 .7.5 1.2 1.2 1.2s1.2-.5 1.2-1.2V9.8c0-.7-.5-1.2-1.2-1.2Zm3-2.3c-.7 0-1.2.5-1.2 1.2v6.9c0 .7.5 1.2 1.2 1.2s1.2-.5 1.2-1.2V7.5c0-.7-.5-1.2-1.2-1.2Zm3-2.1c-.7 0-1.2.5-1.2 1.2v9c0 .7.5 1.2 1.2 1.2h9.9a4.9 4.9 0 0 0 .7-9.7A7.1 7.1 0 0 0 10.5 3.5c-.2.2-.3.4-.3.7Z"/></svg>
+        </a>
+      </div>
+    </figure>
+
+    <div class="project-copy">
+      <h3>Description</h3>
+      <p>
+        "Coward" is a song that I wrote the lyrics to, performed, mixed, and mastered by me in FL Studio.
+        The guitar instrumental was made by a different producer. The song was made in a darker place for me,
+        and the aesthetic I built for this is a representation of that. The music video consists of clips I
+        took around the Isla Vista area because of how foggy the coast can get. I edited the video in Cap Cut.
+        I made this solely for me; it means a lot to me and was very representative of my mental health and where I was in life.
+        This song's alternate title was "Diary Entry Number 3" to illustrate the personal nature of this song.
+      </p>
+    </div>
+
+
+
+    <section class="project-process coward-process" aria-label="Coward process gallery">
+      <svg class="project-process-roots" viewBox="0 0 1000 980" preserveAspectRatio="none" aria-hidden="true">
+        <path class="project-root-path main" pathLength="1" d="M505 0 C498 120 530 205 500 315 C470 430 515 515 490 630 C468 742 490 842 455 980" />
+        <path class="project-root-path branch" pathLength="1" d="M500 260 C410 315 335 350 245 430 C185 482 125 530 60 565" />
+        <path class="project-root-path branch soft" pathLength="1" d="M493 470 C590 515 680 575 760 655 C820 715 885 760 950 790" />
+        <path class="project-root-path branch soft" pathLength="1" d="M485 690 C400 745 320 810 230 900 C185 945 125 970 72 980" />
+      </svg>
+      <header class="project-process-head project-process-reveal">
+        <p class="page-kicker">Process / below the surface</p>
+        <h3>How it grew.</h3>
+        <p>Images from the making of the project. The root system develops as you move farther into the process.</p>
+      </header>
+      <div class="process-gallery coward-process">
+        <figure class="process-photo project-process-reveal" style="--photo-tilt:-1.4deg">
+          <img src="./media/coward-process-01.jpg" alt="Twilight coastline process image associated with Coward" loading="lazy">
+          <figcaption>Coward / process 01</figcaption>
+        </figure>
+        <figure class="process-photo project-process-reveal" style="--photo-tilt:1.1deg">
+          <img src="./media/coward-process-02.jpg" alt="Dark night scene with a red light used as a Coward process reference" loading="lazy">
+          <figcaption>Coward / process 02</figcaption>
+        </figure>
+        <figure class="process-photo project-process-reveal" style="--photo-tilt:-.7deg">
+          <img src="./media/coward-process-03.jpg" alt="Foggy coastal palms process image associated with Coward" loading="lazy">
+          <figcaption>Coward / process 03</figcaption>
+        </figure>
+        <figure class="process-photo project-process-reveal" style="--photo-tilt:1.35deg">
+          <img src="./media/coward-process-04.jpg" alt="Foggy cliffside process image associated with Coward" loading="lazy">
+          <figcaption>Coward / process 04</figcaption>
+        </figure>
+      </div>
+    </section>
+  </section>
+
+  <!-- ========================================================
+       ABOUT / ROOT SYSTEM
+       PORTRAIT: replace the placeholder inside .about-portrait with an <img>
+       later. Additional writing can be added as more .about-story-block
+       sections; their side-entry animation happens automatically.
+       ======================================================== -->
+  <section class="site-page" data-page="about" id="page-about" hidden>
+    <svg class="about-roots" id="about-roots" viewBox="0 0 1000 1500" preserveAspectRatio="none" aria-hidden="true">
+      <path class="about-root-path earth" pathLength="1" d="M505 15 C500 155 535 245 500 360 C465 470 520 555 492 685 C465 820 505 960 470 1120 C445 1235 465 1360 430 1490" />
+      <path class="about-root-path soft" pathLength="1" d="M505 230 C415 305 345 315 250 390 C180 446 120 510 74 590" />
+      <path class="about-root-path" pathLength="1" d="M500 430 C602 470 680 545 755 635 C810 702 865 750 930 790" />
+      <path class="about-root-path soft" pathLength="1" d="M492 690 C390 745 335 850 270 940 C220 1010 150 1075 75 1110" />
+      <path class="about-root-path earth soft" pathLength="1" d="M475 1040 C560 1090 645 1180 720 1285 C765 1350 825 1400 905 1445" />
+      <circle class="about-root-node" cx="505" cy="230" r="5" />
+      <circle class="about-root-node" cx="500" cy="430" r="5" />
+      <circle class="about-root-node" cx="492" cy="690" r="5" />
+      <circle class="about-root-node" cx="475" cy="1040" r="5" />
+    </svg>
+
+    <div class="about-head-grid">
+      <div class="about-heading-copy about-reveal">
+        <p class="page-kicker">About / the root</p>
+        <h2 class="page-title">Foreground</h2>
+        <p class="about-intro-line">A space for the person, practices, and ideas underneath the work.</p>
+      </div>
+
+      <figure class="about-portrait about-photo-deck about-reveal" aria-label="About photo collection">
+        <div class="about-photo-stage" id="about-photo-stage">
+          <img class="about-photo is-current" src="./media/about-portrait-car.jpg" alt="Portrait of Nicholas seated inside a car" data-caption="01 / portrait">
+          <img class="about-photo" src="./media/about-portrait-street.jpg" alt="Portrait of Nicholas standing on a city street" data-caption="02 / portrait">
+          <img class="about-photo" src="./media/about-nature.jpg" alt="A wooded lake surrounded by dense green trees" data-caption="03 / nature">
+        </div>
+        <div class="about-photo-controls">
+          <button class="about-photo-arrow" id="about-photo-prev" type="button" aria-label="Previous About photo">←</button>
+          <figcaption id="about-photo-caption">01 / portrait</figcaption>
+          <button class="about-photo-arrow" id="about-photo-next" type="button" aria-label="Next About photo">→</button>
+        </div>
+        <div class="about-social-links" aria-label="Nicholas Taylor social links">
+          <a class="about-social-link instagram" href="https://www.instagram.com/nickt4g_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.7" r=".9" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a class="about-social-link youtube" href="https://www.youtube.com/@foreground0" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.2 6.2a3 3 0 0 0-2.1-2.1C19.2 3.6 12 3.6 12 3.6s-7.2 0-9.1.5A3 3 0 0 0 .8 6.2C.3 8.1.3 12 .3 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.1.5 9.1.5s7.2 0 9.1-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"/></svg>
+          </a>
+          <a class="about-social-link soundcloud" href="https://soundcloud.com/foreground0" target="_blank" rel="noopener noreferrer" aria-label="SoundCloud" title="SoundCloud">
+            <svg viewBox="0 0 28 18" aria-hidden="true"><path d="M1.2 10.8c-.6 0-1.1.5-1.1 1.1v1.5c0 .6.5 1.1 1.1 1.1s1.1-.5 1.1-1.1v-1.5c0-.6-.5-1.1-1.1-1.1Zm3-2.2c-.7 0-1.2.5-1.2 1.2v4.6c0 .7.5 1.2 1.2 1.2s1.2-.5 1.2-1.2V9.8c0-.7-.5-1.2-1.2-1.2Zm3-2.3c-.7 0-1.2.5-1.2 1.2v6.9c0 .7.5 1.2 1.2 1.2s1.2-.5 1.2-1.2V7.5c0-.7-.5-1.2-1.2-1.2Zm3-2.1c-.7 0-1.2.5-1.2 1.2v9c0 .7.5 1.2 1.2 1.2h9.9a4.9 4.9 0 0 0 .7-9.7A7.1 7.1 0 0 0 10.5 3.5c-.2.2-.3.4-.3.7Z"/></svg>
+          </a>
+        </div>
+      </figure>
+    </div>
+
+    <div class="about-story">
+      <section class="about-story-block about-reveal">
+        <span class="about-growth-marker">01 / person</span>
+        <p>My name is Nicholas Taylor and I am a producer and visual artist in Goleta, California.</p>
+      </section>
+
+      <section class="about-story-block about-reveal">
+        <span class="about-growth-marker">02 / study</span>
+        <p>I am currently an Applied Mathematics student at University of California, Santa Barbara, and I am minoring in Media Arts &amp; Design.</p>
+      </section>
+
+      <section class="about-story-block about-reveal">
+        <span class="about-growth-marker">03 / connection</span>
+        <p>Math, music, and nature all play such integral parts of my life, and my hope is you experience a little of all of it looking through here. Reach me at my email below.</p>
+      </section>
+
+      <!-- ADD MORE ABOUT WRITING HERE LATER:
+           Duplicate an .about-story-block section. Alternating blocks will
+           automatically enter from opposite sides while the roots keep growing. -->
+      <div class="about-future-slot" aria-hidden="true">future writing space</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     FOOTER / CONTACT LINE
+     ========================================================== -->
+<footer>
+  <p>Nicholas Taylor ~ nicholasrtaylor@ucsb.edu ~ 2026</p>
+</footer>
+
+<!-- ==========================================================
+     PAGE / MENU FUNCTIONALITY
+
+     This is what makes one HTML file behave like several pages.
+     Clicking a menu item changes the #route in the address bar,
+     then this code hides the old page and shows the new one.
+
+     Example routes:
+       #home
+       #projects
+       #project-coward
+
+     You normally do NOT need to edit this unless you add a brand
+     new page route.
+     ========================================================== -->
+<script>
+(function () {
+  const pages = Array.from(document.querySelectorAll('.site-page'));
+  const nav = document.getElementById('site-nav');
+  const knownRoutes = new Set(pages.map(page => page.dataset.page));
+
+  const routeTitles = {
+    home: 'Portfolio',
+    projects: 'All Projects',
+    'project-fourth-ground': 'Fourth Ground',
+    'project-call-name': "I'll Call On Your Name",
+    'project-coward': 'Coward Music Video',
+    about: 'About'
+  };
+
+  function currentRoute() {
+    const requested = window.location.hash.replace(/^#/, '') || 'home';
+    return knownRoutes.has(requested) ? requested : 'home';
+  }
+
+  function showRoute() {
+    const route = currentRoute();
+    const isIndividualProject = route.startsWith('project-');
+
+    // Route classes let CSS give Home and individual projects genuinely
+    // different header behavior without duplicating the whole document.
+    document.body.classList.toggle('route-home', route === 'home');
+    document.body.classList.toggle('route-project', isIndividualProject);
+    document.body.classList.toggle('route-about', route === 'about');
+    document.body.classList.toggle('route-projects', route === 'projects');
+    window.dispatchEvent(new Event('portfolio-route-change'));
+
+    pages.forEach(page => {
+      page.hidden = page.dataset.page !== route;
+    });
+
+    // Highlight simple Home / About links.
+    document.querySelectorAll('[data-nav-route]').forEach(link => {
+      const navRoute = link.dataset.navRoute;
+      const isProjectRoute = route === 'projects' || route.startsWith('project-');
+      const shouldBeActive = navRoute === 'projects' ? isProjectRoute : navRoute === route;
+      link.classList.toggle('active', shouldBeActive);
+    });
+
+    // Pause media from any page you just left.
+    document.querySelectorAll('audio, video').forEach(media => {
+      const page = media.closest('.site-page');
+      if (page && page.hidden && !media.paused) media.pause();
+    });
+
+    // Update the browser-tab title.
+    document.title = (routeTitles[route] || 'Portfolio') + ' — Nicholas Taylor';
+
+    // ----------------------------------------------------------
+    // SCROLL TO THE TOP OF EACH NEW PAGE
+    //
+    // When you open a project, this sends the browser to the top
+    // of THAT project instead of keeping the scroll position from
+    // the page you were just viewing.
+    //
+    // Home still returns all the way to the waveform at the top.
+    // Every other route lands at the beginning of its page content,
+    // with a little room left for the sticky navigation bar.
+    // ----------------------------------------------------------
+    requestAnimationFrame(() => {
+      if (route === 'home' || isIndividualProject || route === 'about' || route === 'projects') {
+        // Home begins at the large identity header. Individual projects,
+        // About, and All Projects begin at document top because the large identity header is removed.
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      const activePage = pages.find(page => page.dataset.page === route);
+      if (!activePage) return;
+
+      const navHeight = nav ? nav.offsetHeight : 0;
+      const pageTop = activePage.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo(0, Math.max(0, pageTop - navHeight));
+    });
+  }
+
+  window.addEventListener('hashchange', showRoute);
+  showRoute();
+})();
+</script>
+
+<!-- ==========================================================
+     PROJECT TITLE WAVEFORMS
+
+     Uses the same visual language as the Home identity waveform, but each
+     project page owns its own canvas. Hidden project canvases automatically
+     resize themselves when their route becomes visible.
+     ========================================================== -->
+<script>
+(function () {
+  const canvases = Array.from(document.querySelectorAll('.project-title-wave'));
+  if (!canvases.length) return;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const states = canvases.map(canvas => ({
+    canvas,
+    ctx: canvas.getContext('2d'),
+    width: 0,
+    height: 0,
+    dpr: 1
+  }));
+  const start = performance.now();
+
+  function smoothstep(x) {
+    x = Math.max(0, Math.min(1, x));
+    return x * x * (3 - 2 * x);
+  }
+
+  // Same restless / musical signal character used by the large identity wave.
+  function signal(x, time) {
+    const warpedX = x
+      + Math.sin(x * 0.0065 - time * 1.10) * 16
+      + Math.sin(x * 0.0180 + time * 1.85) * 5;
+
+    const broad =
+      Math.sin(warpedX * 0.030 + time * 2.45) * 0.38 +
+      Math.sin(warpedX * 0.061 - time * 1.70 + 1.7) * 0.22 +
+      Math.sin(warpedX * 0.014 + time * 0.82 + 3.1) * 0.13;
+
+    const detail =
+      Math.sin(warpedX * 0.137 + time * 3.60) * 0.10 +
+      Math.sin(warpedX * 0.247 - time * 5.10 + 0.8) * 0.065;
+
+    const movingFocus = 0.62 + 0.38 * Math.sin(time * 1.25 + x * 0.004);
+    return (broad + detail * movingFocus) / .895;
+  }
+
+  function ensureSize(state) {
+    const rect = state.canvas.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return false;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (Math.abs(rect.width - state.width) > 1 || Math.abs(rect.height - state.height) > 1 || dpr !== state.dpr) {
+      state.width = rect.width;
+      state.height = rect.height;
+      state.dpr = dpr;
+      state.canvas.width = Math.round(rect.width * dpr);
+      state.canvas.height = Math.round(rect.height * dpr);
+      state.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    return true;
+  }
+
+  function draw(state, now) {
+    if (!ensureSize(state)) return;
+    const { ctx, width, height } = state;
+    ctx.clearRect(0, 0, width, height);
+
+    const elapsed = (now - start) / 1000;
+    const time = reduceMotion ? 0.9 : elapsed;
+    const intro = reduceMotion ? 1 : smoothstep(elapsed / 1.25);
+    const centerY = height * .52;
+    const amplitude = height * .32 * intro;
+
+    ctx.beginPath();
+    for (let x = 0; x <= width; x += 2) {
+      const y = centerY + signal(x, time) * amplitude;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 1.35;
+    ctx.stroke();
+  }
+
+  function frame(now) {
+    states.forEach(state => draw(state, now));
+    if (!reduceMotion) requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<!-- ==========================================================
+     EXTERNAL MEDIA
+     Project media now lives in ./media/ and is loaded by the normal
+     relative src paths on the video/audio elements above.
+     Keep the media folder next to index.html when publishing.
+     ========================================================== -->
+<script>
+/* Verify normal external media paths and surface a useful message if the
+   media folder is missing. This works with both local folders and hosting. */
+(function () {
+  const items = [
+    ['arcane-audio', './media/taylor_arcane_01.wav', 'arcane-status'],
+    ['blip-audio', './media/taylor_blip_01.mp3', 'blip-status'],
+    ['coward-video', './media/taylor_coward_02.mov', 'coward-status']
+  ];
+  items.forEach(([mediaId, relativePath, statusId]) => {
+    const media = document.getElementById(mediaId);
+    const status = document.getElementById(statusId);
+    if (!media) return;
+    media.setAttribute('src', relativePath);
+    const clear = () => {
+      if (!status) return;
+      status.textContent = '';
+      status.classList.remove('error');
+    };
+    const fail = () => {
+      if (!status) return;
+      status.textContent = 'Media could not be loaded. Keep the media folder beside index.html.';
+      status.classList.add('error');
+    };
+    media.addEventListener('loadedmetadata', clear, { once: true });
+    media.addEventListener('canplay', clear, { once: true });
+    media.addEventListener('error', fail);
+    media.load();
+  });
+})();
+</script>
+
+
+<script>
+/* ============================================================
+   ABOUT SCROLL REVEAL + ROOT GROWTH
+   ============================================================ */
+(function () {
+  const page = document.getElementById('page-about');
+  const rootSvg = document.getElementById('about-roots');
+  if (!page || !rootSvg) return;
+
+  const reveals = Array.from(page.querySelectorAll('.about-reveal'));
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if ('IntersectionObserver' in window && !reduceMotion) {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .18, rootMargin: '0px 0px -8% 0px' });
+    reveals.forEach(el => observer.observe(el));
+  } else {
+    reveals.forEach(el => el.classList.add('is-visible'));
+  }
+
+  let ticking = false;
+  function updateRoots() {
+    ticking = false;
+    if (page.hidden) return;
+    const rect = page.getBoundingClientRect();
+    const travel = Math.max(1, rect.height - window.innerHeight * .55);
+    const progressed = Math.max(0, -rect.top + window.innerHeight * .22);
+    const progress = reduceMotion ? 1 : Math.max(0, Math.min(1, progressed / travel));
+    rootSvg.style.setProperty('--root-progress', progress.toFixed(4));
+  }
+  function requestUpdate() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(updateRoots);
+  }
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate, { passive: true });
+  window.addEventListener('portfolio-route-change', () => {
+    reveals.forEach(el => {
+      if (reduceMotion) el.classList.add('is-visible');
+    });
+    requestAnimationFrame(updateRoots);
+  });
+  requestAnimationFrame(updateRoots);
+})();
+</script>
+
+<script>
+/* HOME VINES: draw and subtly shift only in response to scrolling. */
+(function () {
+  const stage = document.querySelector('.home-tree-stage');
+  const svg = document.getElementById('home-vines');
+  if (!stage || !svg) return;
+  const paths = Array.from(svg.querySelectorAll('.home-vine-path'));
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let ticking = false;
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function update() {
+    const rect = stage.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    // A slightly shorter scroll window makes the higher-frequency paths arrive
+    // in visible waves rather than one slow uniform drawing.
+    const overall = reduceMotion ? 1 : clamp((vh * .94 - rect.top) / (vh * .64), 0, 1);
+
+    paths.forEach((path, index) => {
+      const start = Number(path.dataset.vineStart || 0);
+      const drift = Number(path.dataset.vineDrift || 0);
+      const localRaw = clamp((overall - start) / Math.max(.20, .82 - start * .35), 0, 1);
+      const local = easeOutCubic(localRaw);
+      path.style.strokeDashoffset = String(1 - local);
+
+      if (!reduceMotion) {
+        // Movement is generated by scroll position only: no idle loop.
+        const phase = overall * (7.2 + (index % 4) * 1.45) + index * .91;
+        const x = Math.sin(phase) * drift * local;
+        const y = Math.cos(phase * 1.37) * Math.abs(drift) * .34 * local;
+        const rot = Math.sin(phase * .73) * .22 * local;
+        path.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotate(${rot.toFixed(3)}deg)`;
+      }
+    });
+    ticking = false;
+  }
+
+  function requestUpdate() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  }
+
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate, { passive: true });
+  window.addEventListener('portfolio-route-change', requestUpdate);
+  requestUpdate();
+})();
+</script>
+
+<script>
+/* ABOUT PHOTO DECK: arrow-controlled slide between three images. */
+(function () {
+  const stage = document.getElementById('about-photo-stage');
+  const prev = document.getElementById('about-photo-prev');
+  const next = document.getElementById('about-photo-next');
+  const caption = document.getElementById('about-photo-caption');
+  if (!stage || !prev || !next || !caption) return;
+  const slides = Array.from(stage.querySelectorAll('.about-photo'));
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let index = 0;
+  let busy = false;
+
+  function move(direction) {
+    if (busy || slides.length < 2) return;
+    busy = true;
+    const current = slides[index];
+    const nextIndex = (index + direction + slides.length) % slides.length;
+    const incoming = slides[nextIndex];
+    const enterClass = direction > 0 ? 'slide-enter-right' : 'slide-enter-left';
+    const outClass = direction > 0 ? 'slide-out-left' : 'slide-out-right';
+
+    incoming.className = 'about-photo ' + enterClass;
+    void incoming.offsetWidth;
+    current.classList.remove('is-current');
+    current.classList.add(outClass);
+    incoming.classList.remove(enterClass);
+    incoming.classList.add('slide-in');
+
+    const finish = () => {
+      current.className = 'about-photo';
+      incoming.className = 'about-photo is-current';
+      index = nextIndex;
+      caption.textContent = incoming.dataset.caption || `${index + 1} / ${slides.length}`;
+      busy = false;
+    };
+    if (reduceMotion) finish();
+    else window.setTimeout(finish, 600);
+  }
+  prev.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+})();
+</script>
+
+<script>
+/* PROJECT PROCESS: roots draw as the process section enters; photos rise in gently. */
+(function () {
+  const sections = Array.from(document.querySelectorAll('.project-process'));
+  const revealItems = Array.from(document.querySelectorAll('.project-process-reveal'));
+  if (!sections.length) return;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function updateRoots() {
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    sections.forEach(section => {
+      const r = section.getBoundingClientRect();
+      const progress = clamp((vh * .92 - r.top) / Math.max(vh * .72, r.height * .82), 0, 1);
+      section.style.setProperty('--project-root-progress', progress.toFixed(4));
+    });
+  }
+
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    revealItems.forEach(el => el.classList.add('is-visible'));
+  } else {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .12, rootMargin: '0px 0px -7% 0px' });
+    revealItems.forEach(el => observer.observe(el));
+  }
+  window.addEventListener('scroll', updateRoots, { passive: true });
+  window.addEventListener('resize', updateRoots, { passive: true });
+  window.addEventListener('portfolio-route-change', () => requestAnimationFrame(updateRoots));
+  updateRoots();
+})();
+</script>
+
+</body>
+</html>
