@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Portfolio — Nicholas Taylor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <style>
 /* ============================================================
    GENERAL PAGE STYLE
@@ -42,6 +45,7 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  background: var(--paper);
 }
 body {
   margin: 0 auto;
@@ -220,7 +224,7 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 100;
 
   /* The compact state is always one continuous edge-to-edge black bar. */
   width: 100%;
@@ -445,6 +449,34 @@ body.route-projects .site-page {
 }
 
 /* ============================================================
+   macOS / DESKTOP HEADER FAILSAFE
+
+   The Home header uses sticky positioning and clipping while it morphs.
+   A category focus is now an explicit state instead of relying on the
+   browser to finish that composited sticky animation correctly.
+   ============================================================ */
+.identity-intro.is-morph-complete {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* While a category is open, remove the large header from layout/painting
+   completely. This makes it impossible for a stale sticky layer to sit over
+   the Audio / Video project titles on desktop browsers. */
+body.tree-focus-active .identity-intro {
+  display: none !important;
+}
+
+body.tree-focus-active .site-nav {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* ============================================================
    HOME VIEWPORT + CONTACT FOOTER
 
    Home reserves a small footer strip at the bottom of the viewport.
@@ -469,6 +501,22 @@ body.route-home footer {
 }
 body.route-home footer p { margin: 0; }
 
+/* Keep the Home footer on the same full-width off-white surface as the tree.
+   This removes the thin color seam that can show where the tree ends. */
+body.route-home footer {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding-left: max(1.5rem, calc((100vw - 68rem) / 2 + 1.5rem));
+  padding-right: max(1.5rem, calc((100vw - 68rem) / 2 + 1.5rem));
+  background: var(--paper);
+}
+
+body.route-home,
+#page-home,
+.home-tree-stage {
+  background: var(--paper);
+}
+
 /* ============================================================
    HOME PAGE = TREE-FIRST STAGE
 
@@ -478,15 +526,18 @@ body.route-home footer p { margin: 0; }
 #page-home {
   padding: 0;
   height: auto;
-  min-height: calc(100vh - var(--compact-nav-height));
-  min-height: calc(100svh - var(--compact-nav-height));
+  /* The Home frame includes BOTH the fixed compact nav and the contact
+     footer. Subtracting both keeps the tree/footer boundary inside the
+     viewport instead of creating an extra strip on desktop displays. */
+  min-height: calc(100vh - var(--actual-nav-height, var(--compact-nav-height)) - var(--home-footer-height));
+  min-height: calc(100svh - var(--actual-nav-height, var(--compact-nav-height)) - var(--home-footer-height));
 }
 
 .home-tree-stage {
   box-sizing: border-box;
   height: auto;
-  min-height: calc(100vh - var(--compact-nav-height));
-  min-height: calc(100svh - var(--compact-nav-height));
+  min-height: calc(100vh - var(--actual-nav-height, var(--compact-nav-height)) - var(--home-footer-height));
+  min-height: calc(100svh - var(--actual-nav-height, var(--compact-nav-height)) - var(--home-footer-height));
   width: 100vw;
   margin-left: calc(50% - 50vw);
   display: grid;
@@ -570,9 +621,12 @@ body.route-home footer p { margin: 0; }
   margin: 0 auto;
   padding: 0;
   border: 0;
+  /* The subtle glow now fades fully back to paper before the bottom edge,
+     preventing a visible horizontal color boundary above the footer. */
   background:
-    radial-gradient(circle at 50% 82%, rgba(113,128,106,.085), transparent 31%),
-    transparent;
+    linear-gradient(to bottom, transparent 0 86%, var(--paper) 100%),
+    radial-gradient(circle at 50% 80%, rgba(113,128,106,.085), transparent 30%),
+    var(--paper);
   overflow: visible;
   display: grid;
   place-items: center;
@@ -1581,8 +1635,8 @@ footer { font-size: .76rem; }
    ============================================================ */
 .branch-focus-shell {
   position: fixed;
-  z-index: 45;
-  top: var(--compact-nav-height);
+  z-index: 90;
+  top: var(--actual-nav-height, var(--compact-nav-height));
   left: 0;
   right: 0;
   bottom: 0;
@@ -1717,8 +1771,8 @@ footer { font-size: .76rem; }
 /* In focus mode the reset control belongs to the viewport, not the scrolled tree. */
 .tree-reset.is-visible {
   position: fixed;
-  z-index: 48;
-  top: calc(var(--compact-nav-height) + .9rem);
+  z-index: 110;
+  top: calc(var(--actual-nav-height, var(--compact-nav-height)) + .9rem);
   left: max(1rem, calc((100vw - 62rem) / 2 + 1.5rem));
 }
 
@@ -1752,6 +1806,24 @@ footer { font-size: .76rem; }
   clip-path: circle(160vmax at var(--focus-origin-x) var(--focus-origin-y));
   -webkit-clip-path: circle(160vmax at var(--focus-origin-x) var(--focus-origin-y));
   transition-delay: 0s;
+}
+
+/* EXIT TRANSITION FIX
+   Opening still grows outward from the selected category, but closing no longer
+   runs that circular mask backwards. Reversing the mask briefly exposed only a
+   center slice of the tree, which made the left/right sides look cut off for a
+   few frames. During exit, keep the overlay fully unclipped and simply fade it
+   away over the already-restored full tree. */
+.branch-focus-shell.is-closing {
+  clip-path: circle(160vmax at var(--focus-origin-x) var(--focus-origin-y));
+  -webkit-clip-path: circle(160vmax at var(--focus-origin-x) var(--focus-origin-y));
+  opacity: 0;
+  visibility: visible;
+  pointer-events: none;
+  transform: none;
+  transition:
+    opacity .24s ease,
+    visibility 0s linear .24s;
 }
 .project-tree-mobile,
 .branch-focus-mobile { display: none; }
@@ -2420,6 +2492,973 @@ footer { font-size: .76rem; }
 }
 
 
+
+
+/* ============================================================
+   CROSS-OS TRANSITION + ABOUT GROWTH POLISH
+   ------------------------------------------------------------
+   These final rules intentionally use conservative CSS primitives that render
+   consistently in Chromium, Firefox, and Safari/macOS. They also override a
+   few older experimental transition rules above without changing the media.
+   ============================================================ */
+
+/* Keep the desktop scrollbar lane stable when a category opens. This removes
+   the tiny horizontal width jump that can make the tree edges look clipped. */
+html { scrollbar-gutter: stable; }
+
+/* Preserve the large Home header's LAYOUT space while category focus is open,
+   but remove it from painting and interaction. `visibility:hidden` is important:
+   unlike display:none it does not change the document geometry, and unlike a
+   clip-only solution it cannot remain visibly composited over the focus scene. */
+body.tree-focus-active .identity-intro {
+  display: block !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Freeze the underlying Home page at the exact pixel where the category was
+   selected. Keeping an explicit scrollbar lane avoids Windows/macOS width
+   differences during modal-style focus. */
+html.tree-focus-lock {
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  overscroll-behavior: none;
+}
+html.tree-focus-lock body {
+  position: fixed;
+  top: calc(-1 * var(--tree-lock-y, 0px));
+  left: 0;
+  right: 0;
+  width: auto;
+  overflow: visible !important;
+}
+
+/* Category transitions are now almost entirely a cross-fade. The focused SVG
+   only moves a fraction of a percent on entry, so the viewport edges never
+   appear to collapse inward. On exit the focused composition is held perfectly
+   still while the full tree underneath is restored. */
+.branch-focus-shell {
+  overflow: hidden !important;
+  transition: opacity .22s ease, visibility 0s linear .24s !important;
+}
+.branch-focus-shell::before {
+  transition: opacity .24s ease !important;
+}
+.branch-focus-svg {
+  opacity: 0;
+  transform: scale(.995) !important;
+  transition: opacity .20s ease, transform .28s cubic-bezier(.2,.72,.2,1) !important;
+  will-change: opacity, transform;
+}
+.branch-focus-shell.is-visible .branch-focus-svg {
+  opacity: 1;
+  transform: scale(1) !important;
+}
+.branch-focus-shell.is-closing {
+  opacity: 0 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+  transform: none !important;
+  transition: opacity .18s ease !important;
+}
+.branch-focus-shell.is-closing::before {
+  opacity: 1 !important;
+  transition: none !important;
+}
+.branch-focus-shell.is-closing .branch-focus-svg {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  transition: none !important;
+}
+
+/* ABOUT: put the vine field in a predictable stacking layer, then make every
+   readable/image card an opaque paper obstacle. The paper-colored outer moat
+   is visually invisible against the page but masks vines just before they hit
+   each border, so growth appears to route behind the content instead of through it. */
+#page-about { isolation: isolate; }
+.about-roots {
+  z-index: 0;
+  width: min(104vw, 72rem);
+  opacity: .96;
+  filter: drop-shadow(0 0 5px rgba(79,94,73,.09));
+}
+.about-head-grid,
+.about-story {
+  position: relative;
+  z-index: 2;
+}
+.about-heading-copy,
+.about-story-block,
+.about-photo-deck {
+  position: relative;
+  z-index: 3;
+  background: var(--paper);
+  border: 1px solid rgba(79,94,73,.25);
+  box-shadow:
+    0 0 0 .68rem var(--paper),
+    0 .85rem 2.6rem rgba(48,58,43,.045);
+}
+.about-heading-copy {
+  padding: clamp(1.15rem, 2vw, 1.55rem) clamp(1.2rem, 2.4vw, 1.75rem);
+}
+.about-story-block {
+  padding: clamp(1.05rem, 2vw, 1.45rem) clamp(1.15rem, 2.5vw, 1.7rem);
+}
+.about-photo-deck {
+  padding: .72rem;
+  border-color: rgba(79,94,73,.28);
+}
+.about-photo-stage {
+  border-color: rgba(79,94,73,.22);
+  background: var(--paper);
+}
+.about-photo-controls,
+.about-social-links {
+  position: relative;
+  z-index: 1;
+}
+
+/* The new secondary growth is deliberately quieter than the original main
+   roots: dense enough to read as greenery, but not loud enough to compete with
+   the writing. */
+.about-root-path.dense {
+  stroke-width: 1.45;
+  opacity: .44;
+}
+.about-root-path.dense.earth { opacity: .40; stroke-width: 1.38; }
+.about-root-path.dense.soft { opacity: .30; stroke-width: 1.18; }
+
+@media (max-width: 700px) {
+  .about-roots { width: 124vw; }
+  .about-heading-copy,
+  .about-story-block,
+  .about-photo-deck {
+    box-shadow:
+      0 0 0 .42rem var(--paper),
+      0 .65rem 1.8rem rgba(48,58,43,.04);
+  }
+  .about-heading-copy,
+  .about-story-block { padding: 1rem 1.05rem; }
+  .about-photo-deck { padding: .55rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branch-focus-shell,
+  .branch-focus-svg,
+  .branch-focus-shell::before { transition: none !important; }
+}
+
+
+
+/* ============================================================
+   SOFT BRANCH FOCUS — continuity-first category transition
+   ------------------------------------------------------------
+   The overview tree now participates in the transition instead of being
+   abruptly replaced. Unrelated branches recede, the selected branch gently
+   grows around its own category node, and the focused composition fades in
+   over it. Only branch elements transform; the full-width SVG never scales,
+   which avoids the cross-OS edge clipping seen with the old camera zoom.
+   ============================================================ */
+.project-graph.is-focused [data-branch],
+.project-graph.is-focused .graph-root-node,
+.project-graph.is-focused .graph-intermediate-node {
+  transition:
+    opacity .48s cubic-bezier(.22,.72,.2,1),
+    transform .62s cubic-bezier(.18,.78,.2,1),
+    filter .48s ease !important;
+}
+.project-graph.is-focused [data-branch] {
+  transform-box: view-box;
+  transform-origin: var(--branch-origin-x, 50%) var(--branch-origin-y, 58%);
+}
+.project-graph.is-focused [data-branch].is-muted-branch,
+.project-graph.is-focused .graph-root-node,
+.project-graph.is-focused .graph-intermediate-node {
+  opacity: .20 !important;
+  filter: none !important;
+  pointer-events: none;
+}
+.project-graph.is-focused [data-branch].is-focus-branch {
+  opacity: 1 !important;
+  transform: scale(1.055);
+}
+.project-graph.is-settling [data-branch].is-focus-branch {
+  transform: scale(1.025);
+}
+
+/* Remove the old pop/bloom behavior if a browser still picks up those rules.
+   The branch itself should feel calm, not spring-loaded. */
+.project-graph.is-focused .graph-category-node.is-focus-branch .category-ring,
+.project-graph.is-focused .graph-project-node.is-focus-branch,
+.project-graph.is-focused .graph-empty-node.is-focus-branch {
+  animation: none !important;
+}
+
+/* The focus overlay itself never clips or scales the viewport. Its paper field
+   softly washes in while only the focused SVG content performs a small zoom. */
+.branch-focus-shell {
+  opacity: 1 !important;
+  transform: none !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  transition: visibility 0s linear .72s !important;
+}
+.branch-focus-shell::before {
+  opacity: 0 !important;
+  transition: opacity .58s cubic-bezier(.22,.72,.2,1) !important;
+}
+.branch-focus-shell.is-visible::before {
+  opacity: 1 !important;
+}
+.branch-focus-svg {
+  opacity: 0 !important;
+  transform-origin: var(--focus-local-x, 50%) var(--focus-local-y, 58%) !important;
+  transform: translateY(8px) scale(.955) !important;
+  transition:
+    opacity .46s ease .08s,
+    transform .72s cubic-bezier(.18,.78,.2,1) .04s !important;
+  will-change: opacity, transform;
+}
+.branch-focus-shell.is-visible .branch-focus-svg {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+/* On exit, the focused composition fades while the selected overview branch
+   remains gently enlarged underneath. The rest of the tree then returns, so
+   the visitor's eye always has a stable object to follow. */
+.branch-focus-shell.is-closing {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+  transition: visibility 0s linear .46s !important;
+}
+.branch-focus-shell.is-closing::before {
+  opacity: 0 !important;
+  transition: opacity .40s cubic-bezier(.22,.72,.2,1) !important;
+}
+.branch-focus-shell.is-closing .branch-focus-svg {
+  opacity: 0 !important;
+  transform: translateY(5px) scale(.975) !important;
+  transition:
+    opacity .24s ease,
+    transform .38s cubic-bezier(.22,.72,.2,1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-graph.is-focused [data-branch],
+  .project-graph.is-focused .graph-root-node,
+  .project-graph.is-focused .graph-intermediate-node,
+  .branch-focus-shell::before,
+  .branch-focus-svg {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+
+/* ============================================================
+   CATEGORY HOVER PREVIEW — pre-click branch isolation
+   ------------------------------------------------------------
+   On pointer hover (or keyboard focus), the selected medium becomes the
+   visual subject BEFORE the visitor clicks. Unrelated branches recede and the
+   chosen branch's existing category color becomes more saturated. The full SVG
+   never scales, so this keeps the interaction comfortable without bringing
+   back the cross-OS edge clipping caused by whole-tree zooms.
+   ============================================================ */
+.project-graph.is-previewing [data-branch],
+.project-graph.is-previewing .graph-root-node,
+.project-graph.is-previewing .graph-intermediate-node {
+  transition:
+    opacity .38s cubic-bezier(.22,.72,.2,1),
+    filter .38s ease,
+    transform .38s cubic-bezier(.22,.72,.2,1) !important;
+}
+
+.project-graph.is-previewing [data-branch].is-preview-muted,
+.project-graph.is-previewing .graph-root-node,
+.project-graph.is-previewing .graph-intermediate-node {
+  opacity: .10 !important;
+  filter: none !important;
+}
+
+.project-graph.is-previewing [data-branch].is-preview-branch {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Let the chosen branch read as one colored path. The branch already owns its
+   medium color; hover simply strengthens that color and line weight. */
+.project-graph.is-previewing .graph-edge.is-preview-branch {
+  stroke-opacity: 1 !important;
+  stroke-width: 1.95 !important;
+  filter: drop-shadow(0 0 2px rgba(79,94,73,.10));
+}
+.project-graph.is-previewing .graph-category-node.is-preview-branch .category-ring {
+  fill: var(--category-color);
+  stroke-width: 2.25;
+  transform: scale(1.11);
+}
+.project-graph.is-previewing .graph-category-node.is-preview-branch .category-core {
+  fill: var(--ink);
+  transform: scale(.86);
+}
+.project-graph.is-previewing .graph-category-node.is-preview-branch .category-label {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+.project-graph.is-previewing .graph-project-node.is-preview-branch .node-ring,
+.project-graph.is-previewing .graph-empty-node.is-preview-branch circle {
+  opacity: 1;
+}
+.project-graph.is-previewing .graph-project-node.is-preview-branch .node-type {
+  opacity: .92;
+}
+
+/* Hover preview replaces the click-time branch zoom. Once clicked, keep the
+   isolated branch steady and let the detailed composition simply fade in. */
+.project-graph.is-focused [data-branch].is-focus-branch,
+.project-graph.is-settling [data-branch].is-focus-branch {
+  transform: none !important;
+}
+.branch-focus-shell::before {
+  transition: opacity .34s cubic-bezier(.22,.72,.2,1) !important;
+}
+.branch-focus-svg {
+  transform: translateY(3px) scale(.99) !important;
+  transition:
+    opacity .30s ease .03s,
+    transform .38s cubic-bezier(.22,.72,.2,1) .02s !important;
+}
+.branch-focus-shell.is-visible .branch-focus-svg {
+  transform: translateY(0) scale(1) !important;
+}
+
+/* Do not create sticky hover states on touch screens. Keyboard focus still
+   uses the same JavaScript preview for accessibility. */
+@media (hover: none), (pointer: coarse) {
+  .project-graph.is-previewing [data-branch].is-preview-muted,
+  .project-graph.is-previewing .graph-root-node,
+  .project-graph.is-previewing .graph-intermediate-node {
+    opacity: 1 !important;
+  }
+  .project-graph.is-previewing .graph-edge.is-preview-branch {
+    stroke-width: inherit !important;
+  }
+}
+
+
+/* ============================================================
+   FAST CATEGORY HANDOFF — hover does the anticipation, click commits
+   ------------------------------------------------------------
+   The hover state already provides the visual buildup. Category entry/exit
+   therefore uses a short crossfade only, with no staged wait. Keeping the
+   durations below ~0.2s makes the controls feel immediate while retaining a
+   soft visual handoff on both Windows and macOS.
+   ============================================================ */
+.branch-focus-shell::before {
+  transition: opacity .16s ease !important;
+}
+.branch-focus-svg {
+  transform: translateY(1px) scale(.997) !important;
+  transition:
+    opacity .15s ease,
+    transform .18s cubic-bezier(.22,.72,.2,1) !important;
+}
+.branch-focus-shell.is-visible .branch-focus-svg {
+  transform: none !important;
+}
+.branch-focus-shell.is-closing {
+  transition: none !important;
+}
+.branch-focus-shell.is-closing::before {
+  opacity: 0 !important;
+  transition: opacity .13s ease !important;
+}
+.branch-focus-shell.is-closing .branch-focus-svg {
+  opacity: 0 !important;
+  transform: none !important;
+  transition: opacity .13s ease !important;
+}
+
+/* Restore the overview quickly on exit. Hover preview remains deliberately
+   slower, so the calm pre-click isolation effect is preserved. */
+.project-graph [data-branch],
+.project-graph .graph-root-node,
+.project-graph .graph-intermediate-node {
+  transition-duration: .20s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branch-focus-shell::before,
+  .branch-focus-svg,
+  .branch-focus-shell.is-closing::before,
+  .branch-focus-shell.is-closing .branch-focus-svg,
+  .project-graph [data-branch],
+  .project-graph .graph-root-node,
+  .project-graph .graph-intermediate-node {
+    transition: none !important;
+  }
+}
+
+
+
+/* ============================================================
+   NO-BLANK CATEGORY EXIT — final paint-layer correction
+   ------------------------------------------------------------
+   The focus shell used to carry its own opaque paper background in addition
+   to the animated ::before paper layer. During exit the SVG and ::before
+   faded away, but that base background stayed opaque until the shell was
+   finally hidden, producing a brief white screen. Keep the shell itself
+   transparent and let the pseudo-element own the paper field so the restored
+   tree is always visible underneath during the handoff.
+   ============================================================ */
+.branch-focus-shell {
+  background: transparent !important;
+}
+.branch-focus-shell::before {
+  background:
+    radial-gradient(circle at 50% 106%, rgba(113,128,106,.11), transparent 38%),
+    var(--paper) !important;
+}
+.branch-focus-shell.is-closing {
+  background: transparent !important;
+}
+.branch-focus-shell.is-closing::before {
+  opacity: 0 !important;
+  transition: opacity .12s ease !important;
+}
+.branch-focus-shell.is-closing .branch-focus-svg {
+  opacity: 0 !important;
+  transition: opacity .12s ease !important;
+}
+
+
+/* ============================================================
+   INSTANT CATEGORY COMMIT — hover does the anticipation
+   ------------------------------------------------------------
+   The category hover preview already performs the slow, comfortable isolation.
+   Clicking should therefore NOT trigger a second ~0.6–0.8s branch animation or
+   make the entire focus shell spend another ~0.46s fading in. Keep the overview
+   visible underneath and bring the focused composition in immediately with only
+   a tiny crossfade. This also avoids a visible "frozen highlighted branch" pause.
+   ============================================================ */
+
+/* Do not replay the old click-time bloom/leaf-arrival animations. */
+.project-graph.is-focused .graph-category-node.is-focus-branch .category-ring,
+.project-graph.is-focused .graph-project-node.is-focus-branch,
+.project-graph.is-focused .graph-empty-node.is-focus-branch {
+  animation: none !important;
+}
+
+/* The shell itself becomes available immediately. The visual softness comes
+   from the layers INSIDE it, so there is no half-second wait before anything
+   starts changing. */
+.branch-focus-shell,
+.branch-focus-shell.is-visible {
+  transition: none !important;
+}
+
+/* Crossfade the paper field over the already-highlighted overview instead of
+   hiding that overview and waiting for the next scene to finish animating. */
+.branch-focus-shell::before {
+  transition: opacity .11s ease !important;
+}
+
+/* The focused branch is almost at its final pose from frame one. */
+.branch-focus-svg {
+  transform: translateY(1px) scale(.998) !important;
+  transition:
+    opacity .12s ease,
+    transform .14s cubic-bezier(.22,.72,.2,1) !important;
+}
+.branch-focus-shell.is-visible .branch-focus-svg {
+  transform: none !important;
+}
+.branch-focus-group {
+  transition: opacity .11s ease !important;
+}
+
+/* Keep the already-fixed no-blank exit just as quick. */
+.branch-focus-shell.is-closing {
+  transition: none !important;
+}
+.branch-focus-shell.is-closing::before,
+.branch-focus-shell.is-closing .branch-focus-svg {
+  transition: opacity .10s ease !important;
+}
+
+
+
+/* ============================================================
+   MOBILE ABOUT — full-width, no horizontal clipping
+   ------------------------------------------------------------
+   Phones do not have enough horizontal room for the desktop alternating
+   story-card offset. Keep the desktop composition unchanged, but on narrow
+   screens stack every About card inside the viewport and reveal it vertically.
+   This also fixes the higher-specificity even-card transform that could remain
+   active after a card had already been revealed in mobile Safari.
+   ============================================================ */
+.about-story-block:nth-child(even).about-reveal.is-visible {
+  transform: none;
+}
+
+@media (max-width: 700px) {
+  body.route-about {
+    width: 100%;
+    max-width: none;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    overflow-x: hidden;
+  }
+
+  body.route-about .site-page,
+  #page-about,
+  .about-head-grid,
+  .about-story {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  #page-about {
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .about-head-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    margin-inline: 0;
+  }
+
+  .about-heading-copy,
+  .about-story-block,
+  .about-story-block:nth-child(even) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .about-story {
+    gap: clamp(3.8rem, 14vw, 5.2rem);
+    margin-inline: 0;
+  }
+
+  .about-story-block,
+  .about-story-block:nth-child(even) {
+    padding: 1rem 1.05rem;
+  }
+
+  .about-story-block p {
+    max-width: 100%;
+    font-size: clamp(1rem, 4.65vw, 1.15rem);
+    line-height: 1.58;
+    letter-spacing: -.006em;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .about-growth-marker {
+    max-width: 100%;
+    margin-bottom: .85rem;
+    font-size: .61rem;
+  }
+
+  /* On phones the reveal comes upward instead of sideways. Sideways entry is
+     what could leave the even-numbered cards hanging outside Safari's viewport. */
+  .about-reveal,
+  .about-story-block:nth-child(even).about-reveal {
+    transform: translateY(1.15rem) scale(.99);
+  }
+
+  .about-reveal.is-visible,
+  .about-story-block:nth-child(even).about-reveal.is-visible {
+    transform: none;
+  }
+
+  .about-photo-deck,
+  .about-portrait {
+    width: min(100%, 24rem);
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* The vines can stay dense, but their oversized SVG is clipped by the About
+     page itself so it never creates a wider mobile layout. */
+  .about-roots {
+    width: 118%;
+    max-width: none;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 430px) {
+  body.route-about {
+    padding-left: max(.85rem, env(safe-area-inset-left));
+    padding-right: max(.85rem, env(safe-area-inset-right));
+  }
+
+  .about-story-block,
+  .about-story-block:nth-child(even) {
+    padding: .9rem .92rem;
+  }
+
+  .about-story-block p {
+    font-size: clamp(.98rem, 4.8vw, 1.08rem);
+  }
+}
+
+
+/* ============================================================
+   FINAL HOME VINE BAND + ABOUT GREENERY / CAROUSEL POLISH
+   ------------------------------------------------------------
+   HOME: the vine field is a real block in document flow ABOVE the project
+   tree. Because it is no longer absolutely layered over the tree, the two
+   systems cannot collide on Windows, macOS, iOS, or Android.
+   ABOUT: varied vine weights, tighter photo-deck frame, and isolated caption /
+   arrow cells so the controls can never overlap each other.
+   ============================================================ */
+
+/* HOME — one continuous animated vine field. It remains separate from the
+   project tree, but its own SVG is extended downward into the tree's empty
+   upper margin so greenery stays visible without creating another animation. */
+.home-tree-stage {
+  display: block !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: visible;
+}
+.home-roots {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  display: block;
+  width: 100vw !important;
+  height: clamp(22rem, 44vh, 31rem) !important;
+  /* Let the SAME animated vine field continue a little farther toward the
+     tree's empty upper margin. This is not a second animation/layer. */
+  margin: 0 0 clamp(-7rem, -10vh, -4.5rem) calc(50% - 50vw);
+  overflow: hidden !important;
+  opacity: 1 !important;
+  background: var(--paper);
+  isolation: isolate;
+
+  /* The entire vine field is revealed from LEFT -> RIGHT by JavaScript as
+     scrolling continues after the identity header has fully morphed. Keeping
+     the reveal on the SVG viewport (instead of toggling opacity) prevents the
+     old "all vines suddenly appear" threshold. */
+  clip-path: inset(0 100% 0 0);
+  -webkit-clip-path: inset(0 100% 0 0);
+  will-change: clip-path;
+}
+.home-vine-path {
+  /* The viewport reveal controls growth now. Every strand is fully drawn
+     behind that moving reveal edge, so even curls and reverse-authored paths
+     still visibly grow from the left side of the page toward the right. */
+  stroke-dasharray: none !important;
+  stroke-dashoffset: 0 !important;
+  transition: none !important;
+}
+.project-graph-wrap {
+  height: calc(100vh - var(--actual-nav-height, var(--compact-nav-height)) - var(--home-footer-height));
+  height: calc(100svh - var(--actual-nav-height, var(--compact-nav-height)) - var(--home-footer-height));
+  min-height: 34rem;
+  background:
+    linear-gradient(to bottom, var(--paper) 0 4%, transparent 13% 86%, var(--paper) 100%),
+    radial-gradient(circle at 50% 80%, rgba(113,128,106,.085), transparent 30%),
+    var(--paper);
+}
+
+/* ABOUT — every vine receives a bounded per-path width from JavaScript. */
+.about-root-path,
+.about-root-path.earth,
+.about-root-path.soft,
+.about-root-path.dense,
+.about-root-path.dense.earth,
+.about-root-path.dense.soft {
+  stroke-width: var(--vine-width, 1.7px) !important;
+}
+.about-root-path.foliage { opacity: .38; }
+.about-root-path.foliage.earth { opacity: .34; }
+.about-root-path.foliage.soft { opacity: .28; }
+
+/* ABOUT PHOTO DECK — remove the inherited portrait aspect-ratio from the
+   outer figure. Only the image stage has an aspect-ratio. This pulls the
+   bottom border up directly beneath the social buttons. */
+.about-photo-deck,
+.about-portrait.about-photo-deck {
+  aspect-ratio: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  display: block;
+  padding: .66rem .66rem .48rem !important;
+}
+.about-photo-stage {
+  width: 100%;
+  margin: 0;
+}
+.about-photo-controls {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem !important;
+  align-items: center;
+  gap: .62rem;
+  width: 100%;
+  margin: .52rem 0 0 !important;
+}
+.about-photo-controls figcaption {
+  position: static !important;
+  inset: auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: auto !important;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 .2rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.about-photo-arrow {
+  position: relative;
+  z-index: 2;
+  justify-self: center;
+  flex: 0 0 auto;
+}
+.about-social-links {
+  margin: .58rem 0 0 !important;
+  padding: 0 0 .04rem;
+}
+
+@media (max-width: 700px) {
+  .home-roots {
+    height: clamp(14.5rem, 35vh, 20rem) !important;
+    margin-bottom: -2rem;
+  }
+  .project-graph-wrap {
+    height: auto;
+    min-height: 0;
+  }
+  .about-photo-deck,
+  .about-portrait.about-photo-deck {
+    padding: .52rem .52rem .42rem !important;
+  }
+  .about-photo-controls {
+    grid-template-columns: 2.1rem minmax(0, 1fr) 2.1rem !important;
+    gap: .42rem;
+    margin-top: .46rem !important;
+  }
+  .about-photo-controls figcaption {
+    font-size: .57rem;
+    letter-spacing: .085em;
+  }
+  .about-social-links { margin-top: .5rem !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-roots {
+    opacity: 1 !important;
+    clip-path: inset(0 0 0 0) !important;
+    -webkit-clip-path: inset(0 0 0 0) !important;
+  }
+  .home-vine-path { stroke-dashoffset: 0 !important; transform: none !important; }
+}
+
+
+/* ============================================================
+   HOME SCROLL CUE + LOWER ROOTS
+   The cue sits just below the currently-visible identity header and fades
+   away BEFORE the morph is complete. The lower roots are a separate strip
+   beneath the About/root node, so they never overlap the project tree.
+   ============================================================ */
+:root {
+  --identity-visible-height: 0px;
+  --home-scroll-cue-opacity: 1;
+}
+.home-scroll-cue {
+  position: fixed;
+  z-index: 78;
+  top: calc(var(--identity-visible-height) + .72rem);
+  right: max(1.25rem, calc((100vw - 68rem) / 2 + 1.5rem));
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  color: rgba(106,106,102,.82);
+  font-size: .64rem;
+  font-weight: 560;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  line-height: 1;
+  opacity: var(--home-scroll-cue-opacity);
+  transform: translateY(calc((1 - var(--home-scroll-cue-opacity)) * -4px));
+  transition: opacity .08s linear;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: top, opacity, transform;
+}
+.home-scroll-cue .scroll-cue-arrow {
+  font-size: .9rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  transform: translateY(-1px);
+}
+body:not(.route-home) .home-scroll-cue,
+body.tree-focus-active .home-scroll-cue {
+  opacity: 0 !important;
+  visibility: hidden;
+}
+
+.home-roots-bottom {
+  position: relative !important;
+  display: block;
+  width: 100vw !important;
+  height: clamp(5.25rem, 9vh, 7rem) !important;
+  margin: clamp(-.4rem, -.7vh, -.15rem) 0 0 calc(50% - 50vw) !important;
+  overflow: hidden !important;
+  background: var(--paper);
+  pointer-events: none;
+  isolation: isolate;
+  clip-path: inset(0 100% 0 0);
+  -webkit-clip-path: inset(0 100% 0 0);
+  will-change: clip-path;
+}
+.home-roots-bottom .home-vine-path {
+  opacity: .46;
+}
+.home-roots-bottom .home-vine-path.earth { opacity: .42; }
+.home-roots-bottom .home-vine-path.soft { opacity: .31; }
+
+@media (max-width: 700px) {
+  .home-scroll-cue {
+    right: max(.85rem, env(safe-area-inset-right));
+    font-size: .57rem;
+    letter-spacing: .14em;
+  }
+  .home-roots-bottom {
+    height: clamp(4.2rem, 8vh, 5.4rem) !important;
+    margin-top: -.15rem !important;
+  }
+}
+
+/* ABOUT — the old future-writing spacer plus generous route padding created
+   an unnecessary empty tail after the final paragraph. Keep the composition
+   intact, but let the page finish soon after the content does. */
+.about-future-slot { display: none !important; }
+#page-about { padding-bottom: clamp(2rem, 4vw, 3.5rem) !important; }
+.about-story { margin-bottom: 0 !important; }
+
+/* ============================================================
+   HOME — TREE / VINE PROXIMITY + MOBILE SCROLL CUE HARDENING
+   Keep the vine field physically separate from the tree, but remove excess
+   empty framing inside the desktop SVG so the uppermost leaves sit closer to
+   the last strands. The SVG itself remains in its own graph container.
+   ============================================================ */
+@media (min-width: 701px) {
+  .project-graph {
+    height: 94% !important;
+  }
+}
+
+/* iPhone / Android browsers get the same onboarding cue as desktop.
+   Explicit display + safe-area positioning avoids a device/browser stylesheet
+   accidentally suppressing or pushing the cue beneath the viewport chrome. */
+@media (max-width: 700px) {
+  .home-scroll-cue {
+    display: inline-flex !important;
+    z-index: 120 !important;
+    top: calc(var(--identity-visible-height) + .58rem) !important;
+    right: max(.9rem, calc(env(safe-area-inset-right) + .65rem)) !important;
+    color: rgba(92,92,88,.90);
+    font-size: .60rem;
+    letter-spacing: .145em;
+  }
+  body.route-home:not(.tree-focus-active) .home-scroll-cue {
+    visibility: visible;
+  }
+}
+
+
+/* ============================================================
+   CROSS-OS TYPOGRAPHY + CLICKABLE SCROLL CUE
+   Load the exact same Jost webfont on every operating system instead of
+   relying on OS-installed fonts. Arial remains only as an emergency fallback.
+   This keeps glyph widths, line wrapping, and perceived weight consistent.
+   ============================================================ */
+html,
+body,
+button,
+input,
+textarea,
+select,
+summary,
+svg text {
+  font-family: "Jost", Arial, sans-serif !important;
+  font-synthesis: none;
+}
+
+/* The desktop identity must remain one line regardless of OS font metrics.
+   Mobile keeps normal wrapping so the name can fit narrow screens. */
+@media (min-width: 701px) {
+  .identity-intro h1 {
+    font-family: "Jost", Arial, sans-serif !important;
+    font-weight: 300 !important;
+    font-style: italic !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+  }
+}
+@media (max-width: 700px) {
+  .identity-intro h1 {
+    font-family: "Jost", Arial, sans-serif !important;
+    font-weight: 300 !important;
+    font-style: italic !important;
+    white-space: normal !important;
+  }
+}
+
+/* The cue is now a real button, but visually remains the same quiet label. */
+.home-scroll-cue {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  padding: .38rem .18rem .38rem .48rem;
+  margin: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.home-scroll-cue:hover,
+.home-scroll-cue:focus-visible {
+  color: rgba(70,70,67,.98);
+}
+.home-scroll-cue:focus-visible {
+  outline: 1px solid rgba(79,94,73,.42);
+  outline-offset: .25rem;
+  border-radius: .15rem;
+}
+body:not(.route-home) .home-scroll-cue,
+body.tree-focus-active .home-scroll-cue,
+.home-scroll-cue[style*="opacity: 0"] {
+  pointer-events: none;
+}
+
 </style>
 </head>
 <body>
@@ -2447,6 +3486,10 @@ footer { font-size: .76rem; }
   <h1>NICHOLAS TAYLOR</h1>
   <p class="identity-subtitle">PRODUCER / ARTIST</p>
 </section>
+
+<button class="home-scroll-cue" id="home-scroll-cue" type="button" aria-label="Scroll to the center of the project tree">
+  <span>scroll</span><span class="scroll-cue-arrow" aria-hidden="true">↓</span>
+</button>
 
 <!-- ==========================================================
      WAVEFORM ANIMATION CODE
@@ -2715,9 +3758,15 @@ footer { font-size: .76rem; }
   function measureHeader() {
     expandedHeight = identity.getBoundingClientRect().height;
     compactHeight = nav.offsetHeight || 64;
+    document.documentElement.style.setProperty('--actual-nav-height', `${compactHeight}px`);
 
     // Stable document-space trigger: unaffected by the visual clipping below.
     morphStart = identity.getBoundingClientRect().top + window.scrollY;
+
+    // Share the exact geometry with the scroll-grown vines and the small
+    // "scroll ↓" cue. This avoids timing/capture differences across browsers.
+    identity.dataset.morphEndY = (morphStart + MORPH_DISTANCE).toFixed(3);
+    document.documentElement.style.setProperty('--identity-visible-height', `${expandedHeight.toFixed(2)}px`);
   }
 
   function updateHeaderMorph() {
@@ -2730,6 +3779,14 @@ footer { font-size: .76rem; }
        its actual CSS height. This is the main fix for the scrolling glitch.
     */
     const visibleHeight = lerp(expandedHeight, compactHeight, progress);
+    document.documentElement.style.setProperty('--identity-visible-height', `${visibleHeight.toFixed(2)}px`);
+
+    // The cue is intentionally gone a little BEFORE the morph completes.
+    // This keeps it useful as an invitation at the top without cluttering the
+    // compact navigation once the interface has clearly started moving.
+    const cueFade = smoothstep(clamp((progress - .34) / .42, 0, 1));
+    document.documentElement.style.setProperty('--home-scroll-cue-opacity', (1 - cueFade).toFixed(4));
+
     const clippedFromBottom = Math.max(0, expandedHeight - visibleHeight);
     const clipValue = `inset(0px 0px ${clippedFromBottom.toFixed(2)}px 0px)`;
     identity.style.clipPath = clipValue;
@@ -2758,6 +3815,10 @@ footer { font-size: .76rem; }
     nav.style.opacity = navProgress.toFixed(4);
     nav.style.transform = `translateY(${(-10 * (1 - navProgress)).toFixed(2)}px)`;
     nav.classList.toggle('is-visible', navProgress > .01);
+
+    // Once the morph is fully complete, stop painting the large sticky layer.
+    // Its layout box stays intact, so scrolling upward still reverses normally.
+    identity.classList.toggle('is-morph-complete', progress >= .999);
 
     ticking = false;
   }
@@ -2797,7 +3858,7 @@ footer { font-size: .76rem; }
          All Projects now lives only in the compact black navigation bar.
          ====================================================== -->
     <div class="home-tree-stage">
-      <svg class="home-roots" id="home-vines" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
+      <svg class="home-roots" id="home-vines" viewBox="0 0 1000 500" preserveAspectRatio="none" aria-hidden="true">
         <!-- Dense horizontal root/vine field. All geometry stays in this upper band. -->
         <path class="home-vine-path earth bold" pathLength="1" data-vine-start="0.00" data-vine-drift="3.8" d="M-30 46 C42 8 84 94 153 51 C205 19 243 84 301 52 C359 20 401 91 463 47 C522 5 563 83 625 48 C686 13 729 85 787 49 C846 12 895 86 1030 42" />
         <path class="home-vine-path soft" pathLength="1" data-vine-start="0.035" data-vine-drift="-5.2" d="M-40 82 C25 125 72 42 135 83 C190 119 224 54 275 82 C327 110 360 57 414 82 C472 109 499 43 552 71 C608 101 636 48 692 76 C750 105 779 54 839 80 C901 108 941 53 1035 88" />
@@ -2816,10 +3877,29 @@ footer { font-size: .76rem; }
         <path class="home-vine-path fine earth" pathLength="1" data-vine-start="0.22" data-vine-drift="-5.6" d="M858 210 C827 183 831 151 862 142 C895 133 922 156 914 183 C907 210 876 219 858 201 C840 183 853 164 874 165 C895 167 900 184 887 195" />
         <path class="home-vine-path fine" pathLength="1" data-vine-start="0.275" data-vine-drift="4.2" d="M221 286 C190 258 196 226 229 218 C263 210 288 235 278 262 C269 289 236 297 219 278 C203 260 219 241 240 244 C260 247 262 264 250 274" />
         <path class="home-vine-path soft earth" pathLength="1" data-vine-start="0.325" data-vine-drift="-3.7" d="M704 319 C673 291 678 258 710 250 C745 241 770 266 760 294 C751 322 719 330 701 311 C685 293 700 274 721 277 C742 280 744 297 732 307" />
+
+        <!-- Extra wandering growth: a few long diagonal/looping vines make the
+             band feel hand-grown rather than like parallel decorative rules. -->
+        <path class="home-vine-path soft earth" pathLength="1" data-vine-start="0.045" data-vine-drift="3.4" d="M-35 24 C95 178 188 10 318 174 C405 283 486 87 590 191 C676 278 735 62 850 145 C925 198 974 128 1035 62" />
+        <path class="home-vine-path fine" pathLength="1" data-vine-start="0.095" data-vine-drift="-4.6" d="M35 342 C116 240 178 358 258 246 C331 144 395 285 470 171 C542 62 616 222 690 118 C768 8 860 155 986 18" />
+        <path class="home-vine-path earth" pathLength="1" data-vine-start="0.145" data-vine-drift="2.8" d="M-20 194 C89 86 170 221 254 122 C330 32 405 185 489 92 C574 0 646 166 730 72 C818 -24 907 125 1025 38" />
+        <path class="home-vine-path fine earth" pathLength="1" data-vine-start="0.205" data-vine-drift="-3.9" d="M14 38 C52 102 118 113 148 65 C175 21 236 23 265 73 C294 124 362 118 389 69 C420 12 488 30 512 86 C536 143 608 138 635 85 C663 30 728 26 760 76 C796 132 864 122 894 70 C920 25 972 22 1018 69" />
+        <path class="home-vine-path soft" pathLength="1" data-vine-start="0.265" data-vine-drift="4.9" d="M-15 305 C64 360 116 268 184 316 C248 361 300 275 365 319 C431 364 483 270 549 317 C617 364 668 277 734 320 C804 365 858 276 922 315 C966 342 997 331 1020 313" />
+
+        <!-- Continuation of the SAME scroll-grown field. These extra strands
+             simply extend the existing greenery downward toward the empty
+             space above the project leaves; they use the exact same clip
+             reveal and drift logic as every path above. -->
+        <path class="home-vine-path earth" pathLength="1" data-vine-start="0.31" data-vine-drift="3.1" d="M-35 360 C45 327 93 398 165 363 C231 331 279 398 344 362 C411 325 460 401 526 362 C594 323 644 400 710 363 C778 326 830 399 897 363 C949 335 986 356 1035 375" />
+        <path class="home-vine-path fine" pathLength="1" data-vine-start="0.34" data-vine-drift="-4.2" d="M-25 394 C37 430 86 360 148 395 C207 429 251 361 311 394 C372 428 417 359 478 394 C539 429 587 360 648 394 C709 428 758 361 819 395 C879 428 925 366 1030 401" />
+        <path class="home-vine-path soft earth" pathLength="1" data-vine-start="0.37" data-vine-drift="2.6" d="M-30 426 C38 391 85 465 151 426 C210 391 257 463 318 425 C381 386 429 465 491 426 C555 387 603 465 666 426 C731 387 780 465 844 427 C901 393 948 423 1034 438" />
+        <path class="home-vine-path fine earth" pathLength="1" data-vine-start="0.40" data-vine-drift="-3.5" d="M-28 461 C38 493 83 430 146 461 C205 491 251 431 311 461 C373 492 418 429 479 460 C541 493 586 430 649 461 C712 493 759 431 822 462 C883 492 929 438 1032 469" />
+        <path class="home-vine-path soft" pathLength="1" data-vine-start="0.43" data-vine-drift="4.5" d="M55 482 C88 448 126 447 151 473 C177 500 217 497 241 470 C267 440 307 444 332 474 C357 503 399 500 423 470 C449 438 491 444 516 475 C541 504 583 500 607 470 C633 439 674 444 699 474 C725 503 767 500 792 470 C819 439 862 444 887 474 C911 501 952 496 1018 462" />
+        <path class="home-vine-path fine" pathLength="1" data-vine-start="0.455" data-vine-drift="-2.7" d="M174 449 C143 420 149 390 180 382 C213 374 237 398 228 424 C220 449 189 457 172 439 C156 422 170 404 190 406 C209 408 212 425 201 435" />
       </svg>
       <div class="project-graph-wrap">
         <button class="tree-reset" id="tree-reset" type="button" aria-label="Return to the full project tree">← View full tree</button>
-        <svg class="project-graph project-tree-desktop" id="project-tree" data-project-tree="desktop" viewBox="0 0 800 520" role="img" aria-label="Project tree organized by medium" aria-describedby="project-graph-desc">
+        <svg class="project-graph project-tree-desktop" id="project-tree" data-project-tree="desktop" viewBox="0 170 800 355" role="img" aria-label="Project tree organized by medium" aria-describedby="project-graph-desc">
                 <desc id="project-graph-desc">A rooted tree grows upward from one bottom root. The main branching vertices represent project media. The Audio category has two project leaves, the Video category has one project leaf and one empty future leaf, and a third future-medium category has two empty leaves.</desc>
 
                 <!-- ==================================================
@@ -3155,6 +4235,15 @@ footer { font-size: .76rem; }
         </div>
 
       </div>
+
+      <!-- A small continuation of the root system BELOW the About/root node.
+           It lives in its own strip and uses the exact same left-to-right
+           scroll reveal as the upper vine field. -->
+      <svg class="home-roots-bottom" id="home-vines-bottom" viewBox="0 0 1000 110" preserveAspectRatio="none" aria-hidden="true">
+        <path class="home-vine-path earth" data-vine-drift="2.8" d="M-35 34 C70 4 135 82 232 38 C322 -2 391 79 486 36 C579 -7 651 82 746 38 C836 -2 905 70 1035 28" />
+        <path class="home-vine-path soft" data-vine-drift="-3.7" d="M-40 79 C62 112 128 40 224 78 C316 115 386 39 482 78 C579 116 648 38 745 77 C842 116 911 45 1036 84" />
+        <path class="home-vine-path fine earth" data-vine-drift="4.1" d="M105 107 C126 74 166 66 188 92 C210 119 185 143 159 128 C138 116 143 91 165 88 C183 86 194 101 188 113" />
+      </svg>
     </div>
   </section>
 
@@ -3179,18 +4268,82 @@ footer { font-size: .76rem; }
     let activeFocus = null;
     let lockedScrollY = 0;
     let resetTimer = 0;
+    let previewFocus = null;
+    const fineHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+    function previewBranch(name) {
+      if (activeFocus || !name) return;
+      previewFocus = name;
+      trees.forEach(tree => tree.classList.add('is-previewing'));
+      branchItems.forEach(item => {
+        const selected = item.dataset.branch === name;
+        item.classList.toggle('is-preview-branch', selected);
+        item.classList.toggle('is-preview-muted', !selected);
+      });
+    }
+
+    function clearBranchPreview() {
+      previewFocus = null;
+      trees.forEach(tree => tree.classList.remove('is-previewing'));
+      branchItems.forEach(item => {
+        item.classList.remove('is-preview-branch');
+        item.classList.remove('is-preview-muted');
+      });
+    }
 
     function lockTreeScroll() {
-      if (document.documentElement.classList.contains('tree-focus-lock')) return;
-      lockedScrollY = window.scrollY;
-      document.documentElement.classList.add('tree-focus-lock');
+      const root = document.documentElement;
+      if (root.classList.contains('tree-focus-lock')) return;
+
+      // Preserve the exact overview position while the focused category is open.
+      // The CSS uses this value to freeze the page in place without allowing the
+      // Windows scrollbar to make the layout wider/narrower during the transition.
+      lockedScrollY = window.scrollY || window.pageYOffset || 0;
+      root.style.setProperty('--tree-lock-y', `${lockedScrollY}px`);
+      root.classList.add('tree-focus-lock');
     }
     function unlockTreeScroll() {
-      document.documentElement.classList.remove('tree-focus-lock');
-      window.scrollTo(0, lockedScrollY);
+      const root = document.documentElement;
+      const restoreY = lockedScrollY;
+      const previousScrollBehavior = root.style.scrollBehavior;
+
+      // The site normally uses smooth scrolling. Scroll restoration should NOT
+      // animate, because that was the small upward nudge visible after leaving a
+      // category. Restore in the same frame, then confirm once after layout settles.
+      root.style.scrollBehavior = 'auto';
+      root.classList.remove('tree-focus-lock');
+      root.style.removeProperty('--tree-lock-y');
+      window.scrollTo(0, restoreY);
+
+      requestAnimationFrame(() => {
+        window.scrollTo(0, restoreY);
+        requestAnimationFrame(() => {
+          root.style.scrollBehavior = previousScrollBehavior;
+        });
+      });
     }
 
-    function markBranch(name) {
+    function setTreeBranchOrigin(name) {
+      trees.forEach(tree => {
+        const node = tree.querySelector(`[data-tree-focus="${name}"]`);
+        if (!node || typeof node.getBBox !== 'function') return;
+        const box = node.getBBox();
+        const vb = tree.viewBox && tree.viewBox.baseVal;
+        if (!vb || !vb.width || !vb.height) return;
+        const cx = box.x + box.width / 2;
+        const cy = box.y + box.height / 2;
+        const xPct = ((cx - vb.x) / vb.width) * 100;
+        const yPct = ((cy - vb.y) / vb.height) * 100;
+        tree.style.setProperty('--branch-origin-x', `${xPct.toFixed(3)}%`);
+        tree.style.setProperty('--branch-origin-y', `${yPct.toFixed(3)}%`);
+      });
+    }
+
+    function markBranch(name, settling = false) {
+      trees.forEach(tree => {
+        tree.classList.toggle('is-focused', Boolean(name));
+        tree.classList.toggle('is-settling', Boolean(name) && settling);
+      });
       categoryNodes.forEach(node => {
         const selected = node.dataset.treeFocus === name;
         node.setAttribute('aria-pressed', selected ? 'true' : 'false');
@@ -3207,36 +4360,84 @@ footer { font-size: .76rem; }
       const rect = node.getBoundingClientRect();
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
+      const shellRect = focusShell.getBoundingClientRect();
+      const localX = Math.max(0, Math.min(shellRect.width, x - shellRect.left));
+      const localY = Math.max(0, Math.min(shellRect.height, y - shellRect.top));
       focusShell.style.setProperty('--focus-origin-x', `${x.toFixed(1)}px`);
       focusShell.style.setProperty('--focus-origin-y', `${y.toFixed(1)}px`);
+      focusShell.style.setProperty('--focus-local-x', `${localX.toFixed(1)}px`);
+      focusShell.style.setProperty('--focus-local-y', `${localY.toFixed(1)}px`);
     }
 
     function focusCategory(name, node) {
       if (activeFocus === name) { resetTree(); return; }
       window.clearTimeout(resetTimer);
+      focusShell.classList.remove('is-closing');
       activeFocus = name;
+      setTreeBranchOrigin(name);
       setExpansionOrigin(node);
       lockTreeScroll();
+      document.body.classList.add('tree-focus-active');
+
+      // The pointer/keyboard preview has already told the visitor which branch
+      // they are entering. Convert that preview directly into the locked focus
+      // state in the same event frame so there is no visual flash or extra zoom.
       markBranch(name);
+      clearBranchPreview();
       focusGroups.forEach(group => group.classList.toggle('is-active', group.dataset.focusStage === name));
       focusShell.setAttribute('aria-hidden', 'false');
-      // One rAF lets the scene establish its collapsed origin before the single transition.
+
+      // The hover preview has already prepared the visitor's eye, so clicking
+      // should commit immediately. Start the focused composition in this same
+      // frame instead of inserting an artificial delay.
       requestAnimationFrame(() => focusShell.classList.add('is-visible'));
     }
 
     function resetTree() {
       if (!activeFocus) return;
+      const closingFocus = activeFocus;
       activeFocus = null;
+      window.clearTimeout(resetTimer);
+
+      // Restore the overview immediately. The focus scene only performs a very
+      // short fade on top of it, so clicking “View Full Tree” feels responsive
+      // instead of waiting through a staged half-second exit.
+      focusShell.classList.add('is-closing');
       focusShell.classList.remove('is-visible');
       focusShell.setAttribute('aria-hidden', 'true');
+      markBranch(null);
+      document.body.classList.remove('tree-focus-active');
+      unlockTreeScroll();
+
+      const finishDelay = reduceMotion ? 0 : 130;
       resetTimer = window.setTimeout(() => {
+        focusShell.classList.remove('is-closing');
         focusGroups.forEach(group => group.classList.remove('is-active'));
-        markBranch(null);
-        unlockTreeScroll();
-      }, reduceMotion ? 0 : 760);
+
+        const focusedNode = document.activeElement && document.activeElement.closest
+          ? document.activeElement.closest('[data-tree-focus]')
+          : null;
+        if (focusedNode) previewBranch(focusedNode.dataset.treeFocus);
+      }, finishDelay);
     }
 
     categoryNodes.forEach(node => {
+      // Desktop pointer hover: preview the whole medium branch before click.
+      // Using matchMedia avoids sticky :hover-like behavior on touch devices.
+      node.addEventListener('pointerenter', () => {
+        if (fineHover.matches) previewBranch(node.dataset.treeFocus);
+      });
+      node.addEventListener('pointerleave', () => {
+        if (fineHover.matches && !activeFocus) clearBranchPreview();
+      });
+
+      // Keyboard visitors receive the same visual preview when tabbing to a
+      // category, keeping the behavior equivalent without relying on :hover.
+      node.addEventListener('focus', () => previewBranch(node.dataset.treeFocus));
+      node.addEventListener('blur', () => {
+        if (!activeFocus) clearBranchPreview();
+      });
+
       node.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
@@ -3263,6 +4464,8 @@ footer { font-size: .76rem; }
         focusShell.setAttribute('aria-hidden', 'true');
         focusGroups.forEach(group => group.classList.remove('is-active'));
         markBranch(null);
+        clearBranchPreview();
+        document.body.classList.remove('tree-focus-active');
         unlockTreeScroll();
       }
     });
@@ -3483,7 +4686,7 @@ footer { font-size: .76rem; }
     </header>
 
     <figure class="project-media">
-      <video id="coward-video" src="./media/taylor_coward_02.mp4" controls preload="metadata" playsinline aria-label="Coward music video"></video>
+      <video id="coward-video" src="./media/taylor_coward_02.mov" controls preload="metadata" playsinline aria-label="Coward music video"></video>
       <div class="media-status" id="coward-status"></div>
       <figcaption>Full music video, shot at UCSB and Isla Vista</figcaption>
       <div class="coward-social-links" aria-label="Coward online links">
@@ -3556,6 +4759,36 @@ footer { font-size: .76rem; }
       <path class="about-root-path" pathLength="1" d="M500 430 C602 470 680 545 755 635 C810 702 865 750 930 790" />
       <path class="about-root-path soft" pathLength="1" d="M492 690 C390 745 335 850 270 940 C220 1010 150 1075 75 1110" />
       <path class="about-root-path earth soft" pathLength="1" d="M475 1040 C560 1090 645 1180 720 1285 C765 1350 825 1400 905 1445" />
+
+      <!-- Denser secondary growth. These quieter vines fill the negative space,
+           while the opaque About cards below act as visual obstacles so the
+           growth disappears cleanly behind their borders instead of crossing text. -->
+      <path class="about-root-path dense soft" pathLength="1" d="M118 20 C72 155 162 255 112 405 C70 535 145 665 98 815 C52 962 132 1125 78 1490" />
+      <path class="about-root-path dense earth" pathLength="1" d="M884 18 C936 158 846 275 892 420 C934 550 855 690 908 842 C954 975 872 1140 928 1492" />
+      <path class="about-root-path dense" pathLength="1" d="M222 78 C326 155 330 250 245 342 C174 420 202 518 315 578 C420 634 406 750 307 826 C214 898 215 1018 330 1095 C421 1157 417 1290 348 1468" />
+      <path class="about-root-path dense earth soft" pathLength="1" d="M786 80 C682 160 674 264 760 350 C832 423 804 526 696 585 C594 641 610 758 704 830 C792 898 786 1028 682 1104 C594 1168 603 1308 660 1470" />
+      <path class="about-root-path dense soft" pathLength="1" d="M92 328 C205 245 325 285 405 395 C466 478 548 487 625 410 C700 335 793 344 924 428" />
+      <path class="about-root-path dense" pathLength="1" d="M60 708 C183 628 292 662 375 758 C451 846 536 850 620 764 C709 672 812 687 955 790" />
+      <path class="about-root-path dense earth soft" pathLength="1" d="M72 1125 C190 1030 306 1078 391 1172 C463 1251 548 1258 632 1177 C719 1091 821 1112 942 1220" />
+      <path class="about-root-path dense soft" pathLength="1" d="M305 198 C255 150 194 174 198 232 C202 286 273 303 304 258 C332 217 294 178 258 194 C226 207 229 246 257 255" />
+      <path class="about-root-path dense earth" pathLength="1" d="M694 498 C748 447 811 472 806 531 C801 585 730 603 699 557 C671 516 710 478 746 493 C779 507 774 548 746 557" />
+      <path class="about-root-path dense soft" pathLength="1" d="M326 930 C268 882 206 912 217 972 C227 1027 301 1037 326 986 C348 941 304 909 270 930 C241 948 251 986 280 990" />
+      <path class="about-root-path dense" pathLength="1" d="M712 1260 C766 1206 834 1230 829 1293 C824 1350 748 1372 714 1323 C683 1279 726 1236 765 1252 C800 1267 794 1310 763 1321" />
+
+
+      <!-- Additional foliage layer. These paths are intentionally irregular;
+           the cards remain opaque obstacles, so the greenery disappears behind
+           text/photo panels instead of drawing through them. -->
+      <path class="about-root-path foliage soft" pathLength="1" d="M150 6 C218 94 158 180 216 270 C272 358 191 438 238 530 C288 628 213 716 258 810 C307 912 225 1004 275 1102 C324 1200 255 1320 292 1495" />
+      <path class="about-root-path foliage earth" pathLength="1" d="M850 0 C783 98 844 188 787 282 C734 370 811 452 765 548 C719 645 795 734 748 832 C698 934 774 1028 724 1127 C675 1225 747 1340 708 1498" />
+      <path class="about-root-path foliage" pathLength="1" d="M15 185 C146 108 270 128 350 210 C426 287 520 292 602 218 C685 143 808 149 990 250" />
+      <path class="about-root-path foliage soft earth" pathLength="1" d="M8 525 C130 438 252 470 342 558 C423 637 518 638 603 558 C693 473 818 489 995 600" />
+      <path class="about-root-path foliage" pathLength="1" d="M4 905 C139 817 259 843 346 936 C424 1019 518 1020 607 937 C700 850 825 866 997 982" />
+      <path class="about-root-path foliage soft" pathLength="1" d="M10 1328 C141 1242 267 1266 353 1350 C431 1425 525 1427 613 1354 C700 1280 817 1286 992 1400" />
+      <path class="about-root-path foliage earth" pathLength="1" d="M382 40 C448 110 419 176 370 211 C322 246 331 313 390 339 C454 367 463 430 414 473 C366 515 375 586 437 610 C503 636 513 704 464 747 C415 790 428 858 490 884" />
+      <path class="about-root-path foliage soft" pathLength="1" d="M618 615 C558 672 572 741 628 772 C687 805 690 872 637 910 C583 950 594 1019 653 1049 C715 1081 717 1153 664 1191 C613 1228 625 1300 688 1332" />
+      <path class="about-root-path foliage earth soft" pathLength="1" d="M85 1180 C128 1130 184 1144 188 1191 C191 1235 137 1258 110 1224 C84 1191 110 1158 143 1167 C173 1175 176 1207 154 1221" />
+
       <circle class="about-root-node" cx="505" cy="230" r="5" />
       <circle class="about-root-node" cx="500" cy="430" r="5" />
       <circle class="about-root-node" cx="492" cy="690" r="5" />
@@ -3623,7 +4856,7 @@ footer { font-size: .76rem; }
      FOOTER / CONTACT LINE
      ========================================================== -->
 <footer>
-  <p>Nicholas Taylor ~ nicholasrtaylor@ucsb.edu ~ 2026</p>
+  <p>Nicholas Taylor - nicholasrtaylor@ucsb.edu - 2026</p>
 </footer>
 
 <!-- ==========================================================
@@ -3832,7 +5065,7 @@ footer { font-size: .76rem; }
   const items = [
     ['arcane-audio', './media/taylor_arcane_01.wav', 'arcane-status'],
     ['blip-audio', './media/taylor_blip_01.mp3', 'blip-status'],
-    ['coward-video', './media/taylor_coward_02.mp4', 'coward-status']
+    ['coward-video', './media/taylor_coward_02.mov', 'coward-status']
   ];
   items.forEach(([mediaId, relativePath, statusId]) => {
     const media = document.getElementById(mediaId);
@@ -3868,7 +5101,21 @@ footer { font-size: .76rem; }
   if (!page || !rootSvg) return;
 
   const reveals = Array.from(page.querySelectorAll('.about-reveal'));
+  const rootPaths = Array.from(rootSvg.querySelectorAll('.about-root-path'));
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Give every vine a slightly different but bounded thickness. The pseudo-
+  // random values are deterministic by path index, so the composition stays
+  // visually varied without jumping around every time the page reloads.
+  rootPaths.forEach((path, index) => {
+    const seed = Math.sin((index + 1) * 12.9898) * 43758.5453;
+    const random01 = seed - Math.floor(seed);
+    const isPrimary = !path.classList.contains('dense') && !path.classList.contains('foliage');
+    const min = isPrimary ? 1.65 : 1.20;
+    const max = isPrimary ? 2.35 : 2.05;
+    const width = min + (max - min) * random01;
+    path.style.setProperty('--vine-width', `${width.toFixed(2)}px`);
+  });
 
   if ('IntersectionObserver' in window && !reduceMotion) {
     const observer = new IntersectionObserver(entries => {
@@ -3912,42 +5159,84 @@ footer { font-size: .76rem; }
 </script>
 
 <script>
-/* HOME VINES: draw and subtly shift only in response to scrolling. */
+/* HOME VINES — PROPORTIONAL SCROLL GROWTH
+   ------------------------------------------------------------
+   The upper and lower vine strips share ONE reveal progress value.
+   Growth begins exactly when the large identity header finishes morphing,
+   then maps proportionally across the REMAINING Home-page scroll range:
+
+      morph complete = 0% width
+      halfway through remaining scroll = ~50% width
+      bottom of Home = 100% width
+
+   Because progress is derived from document geometry on every frame rather
+   than from the moment JavaScript happens to notice a class change, Windows,
+   macOS, Safari, Chromium, and Firefox all receive the same relationship. */
 (function () {
-  const stage = document.querySelector('.home-tree-stage');
-  const svg = document.getElementById('home-vines');
-  if (!stage || !svg) return;
-  const paths = Array.from(svg.querySelectorAll('.home-vine-path'));
+  const topSvg = document.getElementById('home-vines');
+  const bottomSvg = document.getElementById('home-vines-bottom');
+  const identity = document.querySelector('.identity-intro');
+  if (!topSvg || !identity) return;
+
+  const vineSvgs = [topSvg, bottomSvg].filter(Boolean);
+  const paths = vineSvgs.flatMap(svg => Array.from(svg.querySelectorAll('.home-vine-path')));
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let ticking = false;
 
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function setReveal(progress) {
+    const p = clamp(progress, 0, 1);
+    const hiddenRight = (100 * (1 - p)).toFixed(3);
+    const clip = `inset(0 ${hiddenRight}% 0 0)`;
+
+    vineSvgs.forEach(svg => {
+      svg.style.clipPath = clip;
+      svg.style.webkitClipPath = clip;
+      svg.style.setProperty('--home-vine-progress', p.toFixed(4));
+    });
+  }
+
+  function setDrift(progress) {
+    paths.forEach((path, index) => {
+      const drift = Number(path.dataset.vineDrift || 0);
+      const phase = progress * (5.1 + (index % 5) * .66) + index * .69;
+      const x = Math.sin(phase) * drift * .34 * progress;
+      const y = Math.cos(phase * 1.13) * Math.abs(drift) * .13 * progress;
+      const rot = Math.sin(phase * .59) * .065 * progress;
+      path.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotate(${rot.toFixed(3)}deg)`;
+    });
+  }
 
   function update() {
-    const rect = stage.getBoundingClientRect();
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    // A slightly shorter scroll window makes the higher-frequency paths arrive
-    // in visible waves rather than one slow uniform drawing.
-    const overall = reduceMotion ? 1 : clamp((vh * .94 - rect.top) / (vh * .64), 0, 1);
-
-    paths.forEach((path, index) => {
-      const start = Number(path.dataset.vineStart || 0);
-      const drift = Number(path.dataset.vineDrift || 0);
-      const localRaw = clamp((overall - start) / Math.max(.20, .82 - start * .35), 0, 1);
-      const local = easeOutCubic(localRaw);
-      path.style.strokeDashoffset = String(1 - local);
-
-      if (!reduceMotion) {
-        // Movement is generated by scroll position only: no idle loop.
-        const phase = overall * (7.2 + (index % 4) * 1.45) + index * .91;
-        const x = Math.sin(phase) * drift * local;
-        const y = Math.cos(phase * 1.37) * Math.abs(drift) * .34 * local;
-        const rot = Math.sin(phase * .73) * .22 * local;
-        path.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotate(${rot.toFixed(3)}deg)`;
-      }
-    });
     ticking = false;
+    if (!document.body.classList.contains('route-home')) return;
+
+    if (reduceMotion) {
+      setReveal(1);
+      paths.forEach(path => { path.style.transform = 'none'; });
+      return;
+    }
+
+    const morphEndY = Number(identity.dataset.morphEndY);
+    const currentY = window.scrollY || window.pageYOffset || 0;
+
+    // Before the large header is fully morphed, the growth field stays empty.
+    if (!Number.isFinite(morphEndY) || currentY < morphEndY - .5) {
+      setReveal(0);
+      paths.forEach(path => { path.style.transform = 'none'; });
+      return;
+    }
+
+    const doc = document.documentElement;
+    const viewportH = window.innerHeight || doc.clientHeight || 1;
+    const maxScrollY = Math.max(morphEndY + 1, doc.scrollHeight - viewportH);
+    const remainingRange = Math.max(1, maxScrollY - morphEndY);
+
+    // This is the key relationship: reveal position follows scroll position.
+    const progress = clamp((currentY - morphEndY) / remainingRange, 0, 1);
+    setReveal(progress);
+    setDrift(progress);
   }
 
   function requestUpdate() {
@@ -3956,9 +5245,15 @@ footer { font-size: .76rem; }
     requestAnimationFrame(update);
   }
 
+  const observer = new MutationObserver(requestUpdate);
+  observer.observe(identity, { attributes: true, attributeFilter: ['class', 'data-morph-end-y'] });
+
   window.addEventListener('scroll', requestUpdate, { passive: true });
   window.addEventListener('resize', requestUpdate, { passive: true });
+  window.addEventListener('load', requestUpdate, { passive: true });
   window.addEventListener('portfolio-route-change', requestUpdate);
+
+  setReveal(0);
   requestUpdate();
 })();
 </script>
@@ -4042,6 +5337,65 @@ footer { font-size: .76rem; }
   window.addEventListener('resize', updateRoots, { passive: true });
   window.addEventListener('portfolio-route-change', () => requestAnimationFrame(updateRoots));
   updateRoots();
+})();
+</script>
+
+
+<script>
+/* ============================================================
+   SCROLL CUE — CLICK TO CENTER THE PROJECT TREE
+   Uses the currently-visible desktop/mobile tree and centers it in the usable
+   viewport beneath the compact navigation bar. Geometry is measured at click
+   time so the same behavior holds across Windows, macOS, and phones.
+   ============================================================ */
+(function () {
+  const cue = document.getElementById('home-scroll-cue');
+  if (!cue) return;
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function visibleTree() {
+    const candidates = [
+      document.getElementById('project-tree'),
+      document.getElementById('project-tree-mobile')
+    ].filter(Boolean);
+
+    return candidates.find(el => {
+      const style = window.getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return style.display !== 'none' &&
+             style.visibility !== 'hidden' &&
+             rect.width > 0 &&
+             rect.height > 0;
+    }) || candidates[0] || null;
+  }
+
+  cue.addEventListener('click', function () {
+    if (!document.body.classList.contains('route-home') ||
+        document.body.classList.contains('tree-focus-active')) return;
+
+    const tree = visibleTree();
+    if (!tree) return;
+
+    const rect = tree.getBoundingClientRect();
+    const currentY = window.scrollY || window.pageYOffset || 0;
+    const viewportH = window.innerHeight || document.documentElement.clientHeight || 1;
+    const nav = document.getElementById('site-nav');
+    const navH = nav ? nav.getBoundingClientRect().height : 0;
+
+    // Center the tree inside the usable area BELOW the compact nav.
+    const treeCenterDocumentY = currentY + rect.top + rect.height / 2;
+    const usableViewportCenterY = navH + (viewportH - navH) / 2;
+    const maxY = Math.max(0, document.documentElement.scrollHeight - viewportH);
+    const targetY = clamp(treeCenterDocumentY - usableViewportCenterY, 0, maxY);
+
+    window.scrollTo({
+      top: targetY,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    });
+  });
 })();
 </script>
 
